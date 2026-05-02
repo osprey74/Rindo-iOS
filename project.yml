@@ -28,7 +28,7 @@ targets:
     info:
       path: Rindo/Resources/Info.plist
       properties:
-        CFBundleDisplayName: りんどう
+        CFBundleDisplayName: Rindo
         CFBundleShortVersionString: "0.1.0"
         CFBundleVersion: "1"
         LSApplicationCategoryType: "public.app-category.navigation"
