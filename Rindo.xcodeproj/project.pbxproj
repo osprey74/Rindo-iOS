@@ -1,0 +1,528 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0CEDEEA9761BE5013013E191 /* osm-style.json in Resources */ = {isa = PBXBuildFile; fileRef = A4A3C05795184CB478A6CD35 /* osm-style.json */; };
+		31AD503AC2F54A3C374F1C21 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97B17A2B33EC7219FA969766 /* Assets.xcassets */; };
+		51A6917F0A0C51D8D965BAEB /* AttributionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60006A75E9877B3A1585AA22 /* AttributionView.swift */; };
+		5C914F348E476B09A018CD77 /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = 4014E81F7ECF771C2CCBB096 /* MapLibre */; };
+		7A79338779E32BDA4B236D83 /* MapLayerStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C0943BE4F846550792954B6 /* MapLayerStyle.swift */; };
+		9D40CA5DE6A79658DF0489F8 /* MapScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E56549D369BA4102A5F982 /* MapScreen.swift */; };
+		AFEF81B0A57DB796124B17F7 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0FDB08B25A72EF5BE3C18E /* APIClient.swift */; };
+		BEE3A84481B94D4E220B4FD9 /* dosou-osm-bicycle-routes.geojson in Resources */ = {isa = PBXBuildFile; fileRef = 73F70DFF2ABBCE10C755F10A /* dosou-osm-bicycle-routes.geojson */; };
+		CC22BC1146737844C82C69E9 /* RindoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F29A6D8ADCA017F35CAD45 /* RindoApp.swift */; };
+		CDB46ACBD872C80BD68686AF /* RindoMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71577F24BBF2F35D16CD3844 /* RindoMapView.swift */; };
+		DA3EB52CC28D9C6E560328F1 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C00D9FA0B2E6348D1D31150 /* AppConfig.swift */; };
+		FA34360B6E829D4B487E100B /* sapporo-osm-cycleways.geojson in Resources */ = {isa = PBXBuildFile; fileRef = CF5DB96DA00E28EF8F1EB3E7 /* sapporo-osm-cycleways.geojson */; };
+		FE4B30385D2224ABC06F6183 /* RindoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFA4C4B0A1E7087270345C93 /* RindoTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2FDCD179A4C1C3D13603D5F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FCC35743DD12F390DE34CB3E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 105CAF8AF22AF7C87D04EE13;
+			remoteInfo = Rindo;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		04E56549D369BA4102A5F982 /* MapScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapScreen.swift; sourceTree = "<group>"; };
+		0C00D9FA0B2E6348D1D31150 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		4426995F5955659EEDDC9674 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		4C0943BE4F846550792954B6 /* MapLayerStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapLayerStyle.swift; sourceTree = "<group>"; };
+		54F29A6D8ADCA017F35CAD45 /* RindoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RindoApp.swift; sourceTree = "<group>"; };
+		60006A75E9877B3A1585AA22 /* AttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionView.swift; sourceTree = "<group>"; };
+		71577F24BBF2F35D16CD3844 /* RindoMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RindoMapView.swift; sourceTree = "<group>"; };
+		73F70DFF2ABBCE10C755F10A /* dosou-osm-bicycle-routes.geojson */ = {isa = PBXFileReference; path = "dosou-osm-bicycle-routes.geojson"; sourceTree = "<group>"; };
+		7A0FDB08B25A72EF5BE3C18E /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		97B17A2B33EC7219FA969766 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A4A3C05795184CB478A6CD35 /* osm-style.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "osm-style.json"; sourceTree = "<group>"; };
+		BB0626BA985CE2903E3E0D20 /* Rindo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Rindo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CF5DB96DA00E28EF8F1EB3E7 /* sapporo-osm-cycleways.geojson */ = {isa = PBXFileReference; path = "sapporo-osm-cycleways.geojson"; sourceTree = "<group>"; };
+		EFA4C4B0A1E7087270345C93 /* RindoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RindoTests.swift; sourceTree = "<group>"; };
+		F825783B04020253753BD8A9 /* RindoTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RindoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BA8F0364C615083EDE3CCA81 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C914F348E476B09A018CD77 /* MapLibre in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0A06B50742AD014D67175A81 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				E2178665EA031DFF494B58F5 /* API */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		3271D8A2AAB61D4F836CDE40 /* RindoTests */ = {
+			isa = PBXGroup;
+			children = (
+				EFA4C4B0A1E7087270345C93 /* RindoTests.swift */,
+			);
+			path = RindoTests;
+			sourceTree = "<group>";
+		};
+		3A5A7DA87854CB582CAF2FA7 /* Attribution */ = {
+			isa = PBXGroup;
+			children = (
+				60006A75E9877B3A1585AA22 /* AttributionView.swift */,
+			);
+			path = Attribution;
+			sourceTree = "<group>";
+		};
+		3F6FDDAE7A63D24E70EFFF77 /* Rindo */ = {
+			isa = PBXGroup;
+			children = (
+				57C695B2DF5A3DC004837543 /* App */,
+				0A06B50742AD014D67175A81 /* Core */,
+				B37FBFC020CD2F2F1DA85404 /* Features */,
+				859B8857C220ED68BCF31140 /* Resources */,
+			);
+			path = Rindo;
+			sourceTree = "<group>";
+		};
+		57C695B2DF5A3DC004837543 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				0C00D9FA0B2E6348D1D31150 /* AppConfig.swift */,
+				54F29A6D8ADCA017F35CAD45 /* RindoApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		5AF96B29099377ED8AA631C0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BB0626BA985CE2903E3E0D20 /* Rindo.app */,
+				F825783B04020253753BD8A9 /* RindoTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		859B8857C220ED68BCF31140 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				97B17A2B33EC7219FA969766 /* Assets.xcassets */,
+				73F70DFF2ABBCE10C755F10A /* dosou-osm-bicycle-routes.geojson */,
+				4426995F5955659EEDDC9674 /* Info.plist */,
+				A4A3C05795184CB478A6CD35 /* osm-style.json */,
+				CF5DB96DA00E28EF8F1EB3E7 /* sapporo-osm-cycleways.geojson */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		AD2DD84B6B3120D7E020B481 = {
+			isa = PBXGroup;
+			children = (
+				3F6FDDAE7A63D24E70EFFF77 /* Rindo */,
+				3271D8A2AAB61D4F836CDE40 /* RindoTests */,
+				5AF96B29099377ED8AA631C0 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B37FBFC020CD2F2F1DA85404 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				3A5A7DA87854CB582CAF2FA7 /* Attribution */,
+				BD7F3D68D9F3486C2C730F53 /* Map */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		BD7F3D68D9F3486C2C730F53 /* Map */ = {
+			isa = PBXGroup;
+			children = (
+				4C0943BE4F846550792954B6 /* MapLayerStyle.swift */,
+				04E56549D369BA4102A5F982 /* MapScreen.swift */,
+				71577F24BBF2F35D16CD3844 /* RindoMapView.swift */,
+			);
+			path = Map;
+			sourceTree = "<group>";
+		};
+		E2178665EA031DFF494B58F5 /* API */ = {
+			isa = PBXGroup;
+			children = (
+				7A0FDB08B25A72EF5BE3C18E /* APIClient.swift */,
+			);
+			path = API;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		105CAF8AF22AF7C87D04EE13 /* Rindo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 179CDFA266333979D83B4D48 /* Build configuration list for PBXNativeTarget "Rindo" */;
+			buildPhases = (
+				B749BBA9EA7771FD5A3EC68A /* Sources */,
+				3CBCF2ABD71EC104441D27EB /* Resources */,
+				BA8F0364C615083EDE3CCA81 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Rindo;
+			packageProductDependencies = (
+				4014E81F7ECF771C2CCBB096 /* MapLibre */,
+			);
+			productName = Rindo;
+			productReference = BB0626BA985CE2903E3E0D20 /* Rindo.app */;
+			productType = "com.apple.product-type.application";
+		};
+		725E7E3ACAD4B88764B8ECAA /* RindoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 45BBAE55D13DC63B9C8609FA /* Build configuration list for PBXNativeTarget "RindoTests" */;
+			buildPhases = (
+				3629DAA791E50CC5B3D343B5 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				715AAECDB4CA21094ACD56FB /* PBXTargetDependency */,
+			);
+			name = RindoTests;
+			packageProductDependencies = (
+			);
+			productName = RindoTests;
+			productReference = F825783B04020253753BD8A9 /* RindoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FCC35743DD12F390DE34CB3E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = A8199CEACBEE00C79DF4AB0B /* Build configuration list for PBXProject "Rindo" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = AD2DD84B6B3120D7E020B481;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				DBF67FC099509F2E39BC039F /* XCRemoteSwiftPackageReference "maplibre-native-distribution" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5AF96B29099377ED8AA631C0 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				105CAF8AF22AF7C87D04EE13 /* Rindo */,
+				725E7E3ACAD4B88764B8ECAA /* RindoTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		3CBCF2ABD71EC104441D27EB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				31AD503AC2F54A3C374F1C21 /* Assets.xcassets in Resources */,
+				BEE3A84481B94D4E220B4FD9 /* dosou-osm-bicycle-routes.geojson in Resources */,
+				0CEDEEA9761BE5013013E191 /* osm-style.json in Resources */,
+				FA34360B6E829D4B487E100B /* sapporo-osm-cycleways.geojson in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3629DAA791E50CC5B3D343B5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FE4B30385D2224ABC06F6183 /* RindoTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B749BBA9EA7771FD5A3EC68A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFEF81B0A57DB796124B17F7 /* APIClient.swift in Sources */,
+				DA3EB52CC28D9C6E560328F1 /* AppConfig.swift in Sources */,
+				51A6917F0A0C51D8D965BAEB /* AttributionView.swift in Sources */,
+				7A79338779E32BDA4B236D83 /* MapLayerStyle.swift in Sources */,
+				9D40CA5DE6A79658DF0489F8 /* MapScreen.swift in Sources */,
+				CC22BC1146737844C82C69E9 /* RindoApp.swift in Sources */,
+				CDB46ACBD872C80BD68686AF /* RindoMapView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		715AAECDB4CA21094ACD56FB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 105CAF8AF22AF7C87D04EE13 /* Rindo */;
+			targetProxy = 2FDCD179A4C1C3D13603D5F1 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1BA19FCFC509A7558BF96FBA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Rindo/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.osprey74.rindo;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		57D626E0377814205EF8F03F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9963BFADDEEA6CE02EC77292 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Rindo/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.osprey74.rindo;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		AEEBA276166D00E2B9EDFD1D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.osprey74.RindoTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Rindo.app/Rindo";
+			};
+			name = Release;
+		};
+		B7DC282149BB7A4AE153700B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		E0806922AE06EFE877CB47B7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.osprey74.RindoTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Rindo.app/Rindo";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		179CDFA266333979D83B4D48 /* Build configuration list for PBXNativeTarget "Rindo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1BA19FCFC509A7558BF96FBA /* Debug */,
+				9963BFADDEEA6CE02EC77292 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		45BBAE55D13DC63B9C8609FA /* Build configuration list for PBXNativeTarget "RindoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E0806922AE06EFE877CB47B7 /* Debug */,
+				AEEBA276166D00E2B9EDFD1D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A8199CEACBEE00C79DF4AB0B /* Build configuration list for PBXProject "Rindo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				57D626E0377814205EF8F03F /* Debug */,
+				B7DC282149BB7A4AE153700B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		DBF67FC099509F2E39BC039F /* XCRemoteSwiftPackageReference "maplibre-native-distribution" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/maplibre/maplibre-native-distribution.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4014E81F7ECF771C2CCBB096 /* MapLibre */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DBF67FC099509F2E39BC039F /* XCRemoteSwiftPackageReference "maplibre-native-distribution" */;
+			productName = MapLibre;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = FCC35743DD12F390DE34CB3E /* Project object */;
+}
