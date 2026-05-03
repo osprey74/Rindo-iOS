@@ -163,6 +163,13 @@ rindo-api 直接ハンドリング:
 # 公開（認証不要）
 POST /api/auth/login                  → { token, user }   seeded 単一ユーザーのセッション発行
 POST /api/auth/logout                 → { ok: true }      best-effort
+GET  /api/cycling-roads               → Layer 3（GeoJSON FeatureCollection）
+                                        properties.large_scale=true は北海道大規模自転車道（CC-BY）
+                                        properties.large_scale=false は札幌市公式 13 サイクリングロード
+GET  /api/cycling-roads/:id           → GeoJSON Feature
+POST /api/cycling-roads               → 新規作成（Tailnet 限定運用のため認証なし）
+PUT  /api/cycling-roads/:id           → 更新（同上）
+DELETE /api/cycling-roads/:id         → 削除（同上）
 
 # 要認証（Authorization: Bearer <token>）
 GET  /api/auth/me                     → { user }
@@ -175,13 +182,11 @@ GET  /api/locations                   → SavedLocation[]
 POST /api/locations  { name, category, lon, lat, notes }
 PUT  /api/locations/:id  { ... }
 DELETE /api/locations/:id
-GET  /api/cycling-roads               → Layer 3（GeoJSON FeatureCollection）
-                                        properties.large_scale=true は北海道大規模自転車道（CC-BY）
-                                        properties.large_scale=false は札幌市公式 13 サイクリングロード
-GET  /api/cycling-roads/:id           → GeoJSON Feature
 GET  /api/profile                     → Profile（体重等のユーザー設定）
 PUT  /api/profile                     → Profile
 ```
+
+iOS は基本的に Layer 3 を `GET /api/cycling-roads` で読み取るのみで、CRUD 系（POST/PUT/DELETE）は Web の管理 UI から操作する想定。`/api/cycling-roads` の書き込み系がパブリックなのは、Rindo が **所有者一人による占有使用・Tailnet 限定運用前提**で認証・セキュリティを最低限のみ実装している設計選択（[rindo-api/src/index.ts](https://github.com/osprey74/rindo-api/blob/main/src/index.ts) 参照）。
 
 Caddy 経由のリバースプロキシ（rindo-api を経由しない外部サービス）:
 
