@@ -4,6 +4,7 @@ import SwiftUI
 
 struct MapScreen: View {
     @Environment(AuthService.self) private var auth
+    @Environment(\.modelContext) private var modelContext
 
     // レイヤーデータ
     @State private var cyclingRoadsData: Data?
@@ -20,11 +21,10 @@ struct MapScreen: View {
     // ナビゲーション用の共通座標（サーバルートまたはGPXルート）
     @State private var navigationCoordinates: [CLLocationCoordinate2D] = []
 
-    // 位置情報・ナビ
+    // 位置情報・ナビ・走行記録
     @State private var locationService = LocationService()
+    @State private var rideRecorder = RideRecorder()
     @State private var isNavigating = false
-    @State private var elapsedTime: TimeInterval = 0
-    @State private var navigationTimer: Timer?
 
     // 標高
     @State private var elevationProfile: ElevationProfile?
@@ -36,6 +36,7 @@ struct MapScreen: View {
     // シート表示
     @State private var showRoutes = false
     @State private var showLocations = false
+    @State private var showRideHistory = false
     @State private var showSettings = false
 
     // エラー
@@ -53,7 +54,8 @@ struct MapScreen: View {
                 focusCoordinate: focusCoordinate,
                 navigationCoordinates: navigationCoordinates,
                 locationService: locationService,
-                isNavigating: isNavigating
+                isNavigating: isNavigating,
+                recordedTrack: rideRecorder.isRecording ? rideRecorder.trackPoints : []
             )
             .ignoresSafeArea()
 
@@ -68,12 +70,12 @@ struct MapScreen: View {
                         .background(.red, in: Capsule())
                 }
 
-                // 走行情報パネル（ナビ中）
-                if isNavigating {
+                // 走行情報パネル（ナビ中 or 走行記録中）
+                if isNavigating || rideRecorder.isRecording {
                     NavigationInfoPanel(
-                        speedKmh: locationService.speedKmh,
-                        distanceM: locationService.totalDistanceM,
-                        elapsed: elapsedTime,
+                        speedKmh: rideRecorder.isRecording ? rideRecorder.speedKmh : locationService.speedKmh,
+                        distanceM: rideRecorder.isRecording ? rideRecorder.totalDistanceM : locationService.totalDistanceM,
+                        elapsed: rideRecorder.elapsedSeconds,
                         isOffRoute: locationService.isOffRoute
                     )
                     .padding(.horizontal, 8)
@@ -114,6 +116,14 @@ struct MapScreen: View {
             SavedLocationsPanel { location in applyFocus(location.coordinate) }
                 .presentationDetents([.medium, .large])
         }
+        .sheet(isPresented: $showRideHistory) {
+            RideHistoryPanel { ride in
+                // 走行履歴からトラックを地図に表示
+                clearRoute()
+                navigationCoordinates = ride.coordinates
+            }
+            .presentationDetents([.medium, .large])
+        }
         .sheet(isPresented: $showSettings) {
             SettingsView(onSelectImportedRoute: { route in
                 selectImportedRoute(route)
@@ -130,17 +140,41 @@ struct MapScreen: View {
 
     private var sideButtons: some View {
         VStack(spacing: 8) {
-            // ナビ開始/停止
-            if hasActiveRoute {
-                if isNavigating {
-                    sideButton(icon: "stop.fill", label: "停止") {
-                        stopNavigation()
-                    }
-                } else {
-                    sideButton(icon: "play.fill", label: "ナビ") {
-                        startNavigation()
-                    }
+            // 走行記録（常時利用可）
+            if rideRecorder.state == .idle {
+                sideButton(icon: "record.circle", label: "記録") {
+                    startRideRecording()
                 }
+            } else if rideRecorder.state == .recording {
+                sideButton(icon: "pause.fill", label: "一時停止") {
+                    rideRecorder.pause()
+                }
+                sideButton(icon: "stop.fill", label: "記録停止") {
+                    stopRideRecording()
+                }
+            } else if rideRecorder.state == .paused {
+                sideButton(icon: "play.fill", label: "再開") {
+                    rideRecorder.resume()
+                }
+                sideButton(icon: "stop.fill", label: "記録停止") {
+                    stopRideRecording()
+                }
+            }
+
+            // ナビ開始/停止（ルート選択時のみ、記録と独立）
+            if hasActiveRoute && !isNavigating {
+                sideButton(icon: "location.north.fill", label: "ナビ") {
+                    startNavigation()
+                }
+            } else if isNavigating {
+                sideButton(icon: "xmark", label: "ナビ終了") {
+                    stopNavigation()
+                }
+            }
+
+            // 走行履歴
+            sideButton(icon: "list.bullet.rectangle", label: "履歴") {
+                showRideHistory = true
             }
 
             // サーバ連携（ログイン時のみ）
@@ -246,35 +280,93 @@ struct MapScreen: View {
         .padding(.bottom, 8)
     }
 
+    // MARK: - Ride Recording
+
+    private func startRideRecording() {
+        locationService.rideRecorder = rideRecorder
+        rideRecorder.start()
+        if !locationService.isTracking {
+            locationService.startTracking()
+        }
+    }
+
+    private func stopRideRecording() {
+        guard let summary = rideRecorder.stop() else { return }
+        locationService.rideRecorder = nil
+        if !isNavigating {
+            locationService.stopTracking()
+        }
+
+        // SwiftData に保存
+        let rideLog = RideLog(summary: summary)
+        modelContext.insert(rideLog)
+
+        // サーバアップロード（ログイン時のみ、バックグラウンドで）
+        if auth.isAuthenticated {
+            Task { await uploadRide(rideLog) }
+        }
+    }
+
+    private func uploadRide(_ ride: RideLog) async {
+        struct RidePayload: Encodable {
+            let started_at: String
+            let ended_at: String
+            let distance_km: Double
+            let duration_min: Double
+            let ascent_m: Double
+            let descent_m: Double
+            let max_speed_kmh: Double
+            let avg_speed_kmh: Double
+            let calories_kcal: Double
+            let track: [[Double]]
+        }
+
+        let iso = ISO8601DateFormatter()
+        let payload = RidePayload(
+            started_at: iso.string(from: ride.startedAt),
+            ended_at: iso.string(from: ride.endedAt),
+            distance_km: ride.distanceKm,
+            duration_min: ride.durationMin,
+            ascent_m: ride.ascentM,
+            descent_m: ride.descentM,
+            max_speed_kmh: ride.maxSpeedKmh,
+            avg_speed_kmh: ride.avgSpeedKmh,
+            calories_kcal: ride.caloriesKcal,
+            track: ride.decodedTrack
+        )
+
+        do {
+            struct UploadResponse: Decodable { let id: Int }
+            _ = try await APIClient.shared.post(UploadResponse.self, path: "/api/rides", body: payload)
+            ride.uploaded = true
+        } catch {
+            // アップロード失敗は次回リトライ（静かに失敗）
+        }
+    }
+
     // MARK: - Navigation
 
     private func startNavigation() {
         locationService.setRoute(navigationCoordinates)
-        locationService.startTracking()
-        elapsedTime = 0
-        isNavigating = true
-        navigationTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            Task { @MainActor in
-                elapsedTime += 1
-            }
+        if !locationService.isTracking {
+            locationService.startTracking()
         }
+        isNavigating = true
     }
 
     private func stopNavigation() {
         isNavigating = false
-        navigationTimer?.invalidate()
-        navigationTimer = nil
-        locationService.stopTracking()
         locationService.clearRoute()
+        if !rideRecorder.isRecording {
+            locationService.stopTracking()
+        }
     }
 
     private func setupDeviationFeedback() {
         locationService.onDeviation = {
-            // ハプティクス
             let feedback = UIImpactFeedbackGenerator(style: .heavy)
             feedback.impactOccurred()
-            // システムサウンド
-            AudioServicesPlaySystemSound(1521) // Peek
+            AudioServicesPlaySystemSound(1521)
         }
     }
 
@@ -299,7 +391,6 @@ struct MapScreen: View {
         activeImportedRoute = route
         navigationCoordinates = route.coordinates
 
-        // GPX 内の標高データがあればチャート表示
         if let elevations = route.elevations {
             elevationProfile = ElevationService.createProfileFromGPX(
                 coordinates: route.coordinates,
@@ -363,15 +454,13 @@ struct MapScreen: View {
                 if let loc = locationService.currentLocation {
                     applyFocus(loc.coordinate)
                 }
-                if !isNavigating {
+                if !isNavigating && !rideRecorder.isRecording {
                     locationService.stopTracking()
                 }
             }
         }
     }
 
-    /// focusCoordinate を一度 nil にリセットしてから設定し直すことで、
-    /// 同じ座標でも SwiftUI が変更を検知するようにする
     private func applyFocus(_ coordinate: CLLocationCoordinate2D) {
         focusCoordinate = nil
         DispatchQueue.main.async {

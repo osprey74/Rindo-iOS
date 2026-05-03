@@ -35,6 +35,10 @@ targets:
         CFBundleVersion: "1"
         LSApplicationCategoryType: "public.app-category.navigation"
         NSLocationWhenInUseUsageDescription: "走行中のナビゲーションと現在地表示に使用します"
+        NSLocationAlwaysAndWhenInUseUsageDescription: "バックグラウンドでも走行ログを記録します"
+        UIBackgroundModes:
+          - location
+          - audio
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         UILaunchScreen:

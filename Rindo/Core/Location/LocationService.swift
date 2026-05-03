@@ -24,6 +24,9 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
     /// 逸脱通知コールバック
     var onDeviation: (() -> Void)?
 
+    /// 走行記録（セット時、位置更新を RideRecorder にも転送）
+    var rideRecorder: RideRecorder?
+
     // 内部
     private var lastLocation: CLLocation?
 
@@ -38,6 +41,9 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
 
     func startTracking() {
         manager.requestWhenInUseAuthorization()
+        manager.allowsBackgroundLocationUpdates = true
+        manager.pausesLocationUpdatesAutomatically = false
+        manager.showsBackgroundLocationIndicator = true
         manager.startUpdatingLocation()
         isTracking = true
         totalDistanceM = 0
@@ -46,6 +52,7 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
 
     func stopTracking() {
         manager.stopUpdatingLocation()
+        manager.allowsBackgroundLocationUpdates = false
         isTracking = false
     }
 
@@ -90,6 +97,9 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
 
         // ルート逸脱検知
         checkDeviation(location)
+
+        // 走行記録に転送
+        rideRecorder?.handleLocation(location)
     }
 
     private func checkDeviation(_ location: CLLocation) {

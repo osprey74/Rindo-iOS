@@ -27,8 +27,15 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>バックグラウンドでも走行ログを記録します</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>走行中のナビゲーションと現在地表示に使用します</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>audio</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

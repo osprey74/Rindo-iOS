@@ -15,6 +15,8 @@ struct RindoMapView: UIViewRepresentable {
     var navigationCoordinates: [CLLocationCoordinate2D]
     var locationService: LocationService
     var isNavigating: Bool
+    // 走行軌跡
+    var recordedTrack: [RideRecorder.RecordedTrackPoint]
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -45,7 +47,8 @@ struct RindoMapView: UIViewRepresentable {
             navigationCoordinates: navigationCoordinates,
             currentLocation: locationService.currentLocation,
             course: locationService.course,
-            isNavigating: isNavigating
+            isNavigating: isNavigating,
+            recordedTrack: recordedTrack
         )
         if let coord = focusCoordinate {
             mapView.setCenter(coord, zoomLevel: 15, animated: true)
@@ -69,6 +72,7 @@ struct RindoMapView: UIViewRepresentable {
         private var navLocation: CLLocation?
         private var navCourse: Double = 0
         private var navIsActive = false
+        private var trackPoints: [RideRecorder.RecordedTrackPoint] = []
 
         func update(
             mapView: MLNMapView,
@@ -80,7 +84,8 @@ struct RindoMapView: UIViewRepresentable {
             navigationCoordinates: [CLLocationCoordinate2D],
             currentLocation: CLLocation?,
             course: Double,
-            isNavigating: Bool
+            isNavigating: Bool,
+            recordedTrack: [RideRecorder.RecordedTrackPoint]
         ) {
             pendingCyclingRoads = cyclingRoads
             pendingOSMCycleways = osmCycleways
@@ -88,6 +93,7 @@ struct RindoMapView: UIViewRepresentable {
             currentRoute = selectedRoute
             currentLocations = savedLocations
             navCoordinates = navigationCoordinates
+            trackPoints = recordedTrack
             navLocation = currentLocation
             navCourse = course
             navIsActive = isNavigating
@@ -110,6 +116,7 @@ struct RindoMapView: UIViewRepresentable {
             applyLayer3(style: style)
             applyRouteLayer(style: style, mapView: mapView)
             applyLocationMarkers(style: style)
+            applyTrackLayer(style: style)
             applyNavigationLayers(style: style)
         }
 
@@ -284,6 +291,31 @@ struct RindoMapView: UIViewRepresentable {
             label.textOffset = NSExpression(forConstantValue: NSValue(cgVector: CGVector(dx: 0, dy: -1.8)))
             label.textAllowsOverlap = NSExpression(forConstantValue: true)
             style.addLayer(label)
+        }
+
+        // MARK: - Recorded Track (breadcrumb trail)
+
+        private static let trackSourceID = "recorded-track"
+        private static let trackLayerID = "recorded-track-line"
+
+        private func applyTrackLayer(style: MLNStyle) {
+            removeLayer(style: style, layerID: Self.trackLayerID)
+            removeSource(style: style, sourceID: Self.trackSourceID)
+
+            guard trackPoints.count >= 2 else { return }
+
+            var coords = trackPoints.map(\.coordinate)
+            let polyline = MLNPolyline(coordinates: &coords, count: UInt(coords.count))
+            let source = MLNShapeSource(identifier: Self.trackSourceID, shape: polyline)
+            style.addSource(source)
+
+            let layer = MLNLineStyleLayer(identifier: Self.trackLayerID, source: source)
+            layer.lineColor = NSExpression(forConstantValue: UIColor.systemRed)
+            layer.lineWidth = NSExpression(forConstantValue: NSNumber(value: 3))
+            layer.lineJoin = NSExpression(forConstantValue: "round")
+            layer.lineCap = NSExpression(forConstantValue: "round")
+            layer.lineOpacity = NSExpression(forConstantValue: NSNumber(value: 0.8))
+            style.addLayer(layer)
         }
 
         // MARK: - Navigation Layers (arrow + destination line)

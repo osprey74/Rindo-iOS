@@ -13,6 +13,6 @@ struct RindoApp: App {
                     await auth.restoreSession()
                 }
         }
-        .modelContainer(for: ImportedRoute.self)
+        .modelContainer(for: [ImportedRoute.self, RideLog.self])
     }
 }

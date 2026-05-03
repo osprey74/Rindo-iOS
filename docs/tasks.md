@@ -5,7 +5,7 @@
 
 ## 進捗サマリー
 
-- 現在のフェーズ: **Phase iOS-3 着手前**（Phase iOS-1, iOS-2 完了）
+- 現在のフェーズ: **Phase iOS-4 着手前**（Phase iOS-1, iOS-2, iOS-3 完了）
 - 残課題: 大規模自転車道（large_scale）の強調表示は iOS-1 では見送り、必要に応じて後続フェーズで対応
 - 残課題: 地点タップでポップオーバー表示（Phase iOS-2 の軽微な残り、必要に応じて後続で対応）
 
@@ -15,7 +15,7 @@
 |---|---|---|
 | iOS-1 | プロジェクト初期化・地図表示 | ✅ 完了 |
 | iOS-2 | 認証・ルート取り込み・地点表示 | ✅ 完了 |
-| iOS-3 | リアルタイム走行情報・GPS ログ記録 | 未着手 |
+| iOS-3 | リアルタイム走行情報・GPS ログ記録 | ✅ 完了 |
 | iOS-4 | ナビゲーション + 音声案内 | 未着手 |
 | iOS-5 | オフラインマップ・走行モード・リマインダー | 未着手 |
 | iOS-6 | Apple Watch 連携 | 未着手 |
@@ -132,48 +132,54 @@
 
 ---
 
-## Phase iOS-3: リアルタイム走行情報・GPS ログ記録
+## Phase iOS-3: リアルタイム走行情報・GPS ログ記録 ✅
 
 ### 位置情報基盤
 
-- [ ] `LocationProvider`（CLLocationManager ラッパ、@Observable）
-- [ ] バックグラウンド継続設定
-- [ ] 権限リクエスト（`requestAlwaysAuthorization`）
+- [x] `LocationService`（CLLocationManager ラッパ、@Observable、バックグラウンド対応）
+- [x] バックグラウンド継続設定（Info.plist: NSLocationAlwaysAndWhenInUseUsageDescription、UIBackgroundModes: location + audio）
+- [x] `allowsBackgroundLocationUpdates = true`、`showsBackgroundLocationIndicator = true`
 
 ### 走行記録
 
-- [ ] `RideRecorder`（@Observable）
-- [ ] 速度（CLLocation.speed → km/h）
-- [ ] 距離（Haversine 累積）
-- [ ] 経過時間（Timer）
-- [ ] 方向（CLLocation.course）
-- [ ] 標高（CLLocation.altitude or OpenTopoData）
-- [ ] 勾配（10 秒窓ローリング平均）
+- [x] `RideRecorder`（@Observable、start/pause/resume/stop）
+- [x] 速度（CLLocation.speed → km/h、最高速度記録）
+- [x] 距離（CLLocation.distance 累積）
+- [x] 経過時間（Timer、一時停止中は除外）
+- [x] 方向（CLLocation.course）
+- [x] 標高（CLLocation.altitude）
+- [x] 勾配（10 秒窓ローリング平均）
 
 ### 消費カロリー
 
-- [ ] HealthKit 権限リクエスト
-- [ ] 体重取得（HKQuantityTypeIdentifier.bodyMass）
-- [ ] 取得失敗時の手入力フォールバック画面
-- [ ] MET ベース計算（HANDOFF 仕様準拠）
+- [x] MET ベース計算（HANDOFF 仕様準拠: MET = 7.5 × (1 + 勾配% × 0.1)）
+- [x] 体重は RideRecorder.weightKg で設定（デフォルト 70kg）
+- [ ] HealthKit 体重取得（Apple Developer Program 契約後に追加）
+- [ ] HealthKit ワークアウト書き戻し（同上）
 
 ### UI
 
-- [ ] 走行中ダッシュボード（速度・距離・経過時間・勾配・カロリーを大きく表示）
-- [ ] スタート/一時停止/停止ボタン
-- [ ] 地図上に現在地マーカー + 走行軌跡
+- [x] NavigationInfoPanel（速度・距離・経過時間）
+- [x] 記録開始/一時停止/再開/停止ボタン（サイドボタン群）
+- [x] 地図上に走行軌跡描画（赤線、MLNLineStyleLayer）
+- [x] 矢印マーカー + 逸脱警告バナー
 
 ### 永続化
 
-- [ ] SwiftData モデル: `RideLog`, `TrackPoint`
-- [ ] 走行終了時に保存
-- [ ] 走行履歴一覧画面
+- [x] SwiftData モデル: `RideLog`（JSON トラックデータ含む）
+- [x] 走行終了時に自動保存
+- [x] `RideHistoryPanel`（走行履歴一覧、削除対応）
 
 ### GPX エクスポート
 
-- [ ] GPX 1.1 生成（trkpt + ele + time + speed extension）
-- [ ] iOS 共有シート経由で出力（UIDocumentPickerViewController）
-- [ ] `POST /api/rides` でサーバアップロード（オプション）
+- [x] `GPXExporter` で GPX 1.1 生成（trkpt + ele + time + speed extension）
+- [x] `ShareSheet`（UIActivityViewController）経由で出力
+- [x] `POST /api/rides` でサーバアップロード（ログイン時のみ、バックグラウンド）
+
+### rindo-api
+
+- [x] `migrations/004_rides.sql`（rides テーブル）
+- [x] `handlers/rides.ts`（GET /api/rides、GET /api/rides/:id、POST /api/rides、DELETE /api/rides/:id）
 
 ### HealthKit 書き戻し
 
