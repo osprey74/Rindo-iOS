@@ -89,12 +89,13 @@ struct MapScreen: View {
                 }
             }
 
+        }
+        .overlay(alignment: .topLeading) {
             // 左上ボタン群
-            VStack(spacing: 8) {
-                sideButtons
-                Spacer()
+            HStack(alignment: .top, spacing: 8) {
+                verticalButtons
+                actionButtons
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading)
             .padding(.top, 60)
         }
@@ -136,48 +137,11 @@ struct MapScreen: View {
         }
     }
 
-    // MARK: - Side Buttons
+    // MARK: - Button Layout
 
-    private var sideButtons: some View {
+    /// 縦列（左端）: ルート → 地点 → 現在地 → 設定
+    private var verticalButtons: some View {
         VStack(spacing: 8) {
-            // 走行記録（常時利用可）
-            if rideRecorder.state == .idle {
-                sideButton(icon: "record.circle", label: "記録") {
-                    startRideRecording()
-                }
-            } else if rideRecorder.state == .recording {
-                sideButton(icon: "pause.fill", label: "一時停止") {
-                    rideRecorder.pause()
-                }
-                sideButton(icon: "stop.fill", label: "記録停止") {
-                    stopRideRecording()
-                }
-            } else if rideRecorder.state == .paused {
-                sideButton(icon: "play.fill", label: "再開") {
-                    rideRecorder.resume()
-                }
-                sideButton(icon: "stop.fill", label: "記録停止") {
-                    stopRideRecording()
-                }
-            }
-
-            // ナビ開始/停止（ルート選択時のみ、記録と独立）
-            if hasActiveRoute && !isNavigating {
-                sideButton(icon: "location.north.fill", label: "ナビ") {
-                    startNavigation()
-                }
-            } else if isNavigating {
-                sideButton(icon: "xmark", label: "ナビ終了") {
-                    stopNavigation()
-                }
-            }
-
-            // 走行履歴
-            sideButton(icon: "list.bullet.rectangle", label: "履歴") {
-                showRideHistory = true
-            }
-
-            // サーバ連携（ログイン時のみ）
             if auth.isAuthenticated {
                 sideButton(icon: "map", label: "ルート") {
                     showRoutes = true
@@ -186,12 +150,55 @@ struct MapScreen: View {
                     showLocations = true
                 }
             }
-
             sideButton(icon: "location.fill", label: "現在地") {
                 goToCurrentLocation()
             }
             sideButton(icon: "gearshape", label: "設定") {
                 showSettings = true
+            }
+        }
+    }
+
+    /// 横列（ルートの右隣）: ナビ → 記録 → 履歴
+    private var actionButtons: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                // ナビ（ルート有効時のみ）
+                if hasActiveRoute && !isNavigating {
+                    sideButton(icon: "location.north.fill", label: "ナビ") {
+                        startNavigation()
+                    }
+                } else if isNavigating {
+                    sideButton(icon: "xmark", label: "ナビ終了") {
+                        stopNavigation()
+                    }
+                }
+
+                // 記録
+                if rideRecorder.state == .idle {
+                    sideButton(icon: "record.circle", label: "記録") {
+                        startRideRecording()
+                    }
+                } else if rideRecorder.state == .recording {
+                    sideButton(icon: "pause.fill", label: "一時停止") {
+                        rideRecorder.pause()
+                    }
+                    sideButton(icon: "stop.fill", label: "記録停止") {
+                        stopRideRecording()
+                    }
+                } else if rideRecorder.state == .paused {
+                    sideButton(icon: "play.fill", label: "再開") {
+                        rideRecorder.resume()
+                    }
+                    sideButton(icon: "stop.fill", label: "記録停止") {
+                        stopRideRecording()
+                    }
+                }
+
+                // 履歴
+                sideButton(icon: "list.bullet.rectangle", label: "履歴") {
+                    showRideHistory = true
+                }
             }
         }
     }
