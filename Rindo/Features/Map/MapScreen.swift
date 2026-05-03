@@ -325,6 +325,16 @@ struct MapScreen: View {
 
     private func startRideRecording() {
         locationService.rideRecorder = rideRecorder
+
+        // HealthKit から体重取得
+        Task {
+            if await HealthKitService.shared.requestAuthorization() {
+                if let weight = await HealthKitService.shared.fetchBodyMass() {
+                    rideRecorder.weightKg = weight
+                }
+            }
+        }
+
         rideRecorder.start()
         if !locationService.isTracking {
             locationService.startTracking()
@@ -341,6 +351,16 @@ struct MapScreen: View {
         // SwiftData に保存
         let rideLog = RideLog(summary: summary)
         modelContext.insert(rideLog)
+
+        // HealthKit ワークアウト書き戻し
+        Task {
+            await HealthKitService.shared.saveWorkout(
+                startDate: summary.startedAt,
+                endDate: summary.endedAt,
+                distanceKm: summary.distanceKm,
+                caloriesKcal: summary.caloriesKcal
+            )
+        }
 
         // サーバアップロード（ログイン時のみ、バックグラウンドで）
         if auth.isAuthenticated {

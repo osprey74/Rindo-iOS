@@ -34,6 +34,16 @@ struct RindoMapView: UIViewRepresentable {
         mapView.showsUserLocation = true
         mapView.delegate = context.coordinator
         mapView.allowsRotating = false
+
+        // 地点マーカータップ用ジェスチャ
+        let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleMapTap(_:)))
+        for gesture in mapView.gestureRecognizers ?? [] {
+            if let existing = gesture as? UITapGestureRecognizer {
+                tap.require(toFail: existing)
+            }
+        }
+        mapView.addGestureRecognizer(tap)
+
         return mapView
     }
 
@@ -115,6 +125,43 @@ struct RindoMapView: UIViewRepresentable {
             applyAllLayers(to: mapView)
         }
 
+        // MARK: - Tap Handler
+
+        func mapView(_ mapView: MLNMapView, didSelect annotation: MLNAnnotation) {
+            // MLNAnnotation 経由のタップは使わない
+        }
+
+        @objc func handleMapTap(_ sender: UITapGestureRecognizer) {
+            guard let mapView = sender.view as? MLNMapView else { return }
+            let point = sender.location(in: mapView)
+
+            // 地点マーカーレイヤーをタップ判定
+            let features = mapView.visibleFeatures(
+                at: point,
+                styleLayerIdentifiers: [Self.locationLayerID]
+            )
+            guard let feature = features.first,
+                  let name = feature.attribute(forKey: "name") as? String else {
+                // ポップアップ外タップで閉じる
+                mapView.deselectAnnotation(mapView.selectedAnnotations.first, animated: true)
+                return
+            }
+
+            let emoji = feature.attribute(forKey: "emoji") as? String ?? "📍"
+            let coordinate = feature.coordinate
+
+            // ポップアップ表示
+            let annotation = MLNPointAnnotation()
+            annotation.coordinate = coordinate
+            annotation.title = "\(emoji) \(name)"
+            annotation.subtitle = feature.attribute(forKey: "notes") as? String
+            mapView.selectAnnotation(annotation, animated: true, completionHandler: nil)
+        }
+
+        func mapView(_ mapView: MLNMapView, annotationCanShowCallout annotation: MLNAnnotation) -> Bool {
+            true
+        }
+
         func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
             styleLoaded = true
             // 矢印画像をスタイルに登録
@@ -174,21 +221,44 @@ struct RindoMapView: UIViewRepresentable {
             guard let shape = try? MLNShape(data: data, encoding: String.Encoding.utf8.rawValue) else { return }
             let source = MLNShapeSource(identifier: id, shape: shape)
             style.addSource(source)
+            // 札幌市公式（large_scale != 1）— オレンジ
             let exclusive = MLNLineStyleLayer(identifier: MapLayerStyle.CuratedRoads.exclusiveLayerID, source: source)
-            exclusive.predicate = NSPredicate(format: "road_type == 'exclusive'")
+            exclusive.predicate = NSPredicate(format: "road_type == 'exclusive' AND large_scale != 1")
             exclusive.lineColor = NSExpression(forConstantValue: MapLayerStyle.CuratedRoads.color)
             exclusive.lineWidth = NSExpression(forConstantValue: NSNumber(value: Float(MapLayerStyle.CuratedRoads.exclusiveWidth)))
             exclusive.lineJoin = NSExpression(forConstantValue: "round")
             exclusive.lineCap = NSExpression(forConstantValue: "round")
             style.addLayer(exclusive)
+
             let shared = MLNLineStyleLayer(identifier: MapLayerStyle.CuratedRoads.sharedLayerID, source: source)
-            shared.predicate = NSPredicate(format: "road_type == 'shared'")
+            shared.predicate = NSPredicate(format: "road_type == 'shared' AND large_scale != 1")
             shared.lineColor = NSExpression(forConstantValue: MapLayerStyle.CuratedRoads.color)
             shared.lineWidth = NSExpression(forConstantValue: NSNumber(value: Float(MapLayerStyle.CuratedRoads.sharedWidth)))
             shared.lineDashPattern = NSExpression(forConstantValue: MapLayerStyle.CuratedRoads.sharedDashPattern)
             shared.lineJoin = NSExpression(forConstantValue: "round")
             shared.lineCap = NSExpression(forConstantValue: "round")
             style.addLayer(shared)
+
+            // 北海道大規模自転車道（large_scale == 1）— 青紫、太め
+            let largeScale = MLNLineStyleLayer(identifier: MapLayerStyle.CuratedRoads.largeScaleLayerID, source: source)
+            largeScale.predicate = NSPredicate(format: "large_scale == 1")
+            largeScale.lineColor = NSExpression(forConstantValue: MapLayerStyle.CuratedRoads.largeScaleColor)
+            largeScale.lineWidth = NSExpression(forConstantValue: NSNumber(value: Float(MapLayerStyle.CuratedRoads.largeScaleWidth)))
+            largeScale.lineJoin = NSExpression(forConstantValue: "round")
+            largeScale.lineCap = NSExpression(forConstantValue: "round")
+            style.addLayer(largeScale)
+
+            // 路線名ラベル（Web版と同じ minzoom 10、symbol-spacing 320）
+            let label = MLNSymbolStyleLayer(identifier: MapLayerStyle.CuratedRoads.labelLayerID, source: source)
+            label.text = NSExpression(forKeyPath: "name")
+            label.textColor = NSExpression(forConstantValue: UIColor(red: 0x5C/255, green: 0x2C/255, blue: 0x00/255, alpha: 1))
+            label.textHaloColor = NSExpression(forConstantValue: UIColor(white: 1, alpha: 0.95))
+            label.textHaloWidth = NSExpression(forConstantValue: NSNumber(value: 1.5))
+            label.symbolPlacement = NSExpression(forConstantValue: "line")
+            label.symbolSpacing = NSExpression(forConstantValue: NSNumber(value: 320))
+            label.textFontSize = NSExpression(forConstantValue: NSNumber(value: 11))
+            style.addLayer(label)
+
             addedSources.insert(id)
         }
 
