@@ -10,6 +10,7 @@ struct RindoMapView: UIViewRepresentable {
     var selectedRoute: SavedRoute?
     var savedLocations: [SavedLocation]
     var focusCoordinate: CLLocationCoordinate2D?
+    var focusZoomLevel: Double?
 
     // ナビゲーション
     var navigationCoordinates: [CLLocationCoordinate2D]
@@ -51,7 +52,8 @@ struct RindoMapView: UIViewRepresentable {
             recordedTrack: recordedTrack
         )
         if let coord = focusCoordinate {
-            mapView.setCenter(coord, zoomLevel: 15, animated: true)
+            let zoom = focusZoomLevel ?? 15
+            mapView.setCenter(coord, zoomLevel: zoom, animated: true)
         }
     }
 

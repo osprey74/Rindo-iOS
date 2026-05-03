@@ -35,6 +35,7 @@ struct MapScreen: View {
 
     // 地図制御
     @State private var focusCoordinate: CLLocationCoordinate2D?
+    @State private var navZoomLevel: Double?
 
     // シート表示
     @State private var showRoutes = false
@@ -55,6 +56,7 @@ struct MapScreen: View {
                 selectedRoute: selectedRoute,
                 savedLocations: savedLocations,
                 focusCoordinate: focusCoordinate,
+                focusZoomLevel: navZoomLevel,
                 navigationCoordinates: navigationCoordinates,
                 locationService: locationService,
                 isNavigating: isNavigating,
@@ -397,6 +399,11 @@ struct MapScreen: View {
                 waypoints: selectedRoute?.waypoints.map(\.coordinate) ?? navigationCoordinates
             )
         }
+
+        // ナビ開始時に現在地付近をズームイン（zoom 17）
+        if let loc = locationService.currentLocation {
+            applyFocus(loc.coordinate, zoom: 17)
+        }
     }
 
     private func stopNavigation() {
@@ -467,6 +474,7 @@ struct MapScreen: View {
             } catch {
                 // Valhalla 失敗時はライン追従ナビのみ
                 valhallaRoute = nil
+                errorMessage = "Valhalla: \(error.localizedDescription)"
             }
         }
 
@@ -555,8 +563,9 @@ struct MapScreen: View {
         }
     }
 
-    private func applyFocus(_ coordinate: CLLocationCoordinate2D) {
+    private func applyFocus(_ coordinate: CLLocationCoordinate2D, zoom: Double? = nil) {
         focusCoordinate = nil
+        navZoomLevel = zoom
         DispatchQueue.main.async {
             focusCoordinate = coordinate
         }

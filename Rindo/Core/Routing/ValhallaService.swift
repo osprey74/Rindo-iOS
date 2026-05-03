@@ -22,6 +22,7 @@ struct ValhallaSummary: Codable, Sendable {
     let time: Double    // seconds
 }
 
+/// CodingKeys 不要 — APIClient の .convertFromSnakeCase が自動変換
 struct ValhallaManeuver: Codable, Sendable {
     let type: Int
     let instruction: String
@@ -33,16 +34,6 @@ struct ValhallaManeuver: Codable, Sendable {
     let beginShapeIndex: Int
     let endShapeIndex: Int
     let streetNames: [String]?
-
-    enum CodingKeys: String, CodingKey {
-        case type, instruction, length, time
-        case verbalPreTransitionInstruction = "verbal_pre_transition_instruction"
-        case verbalPostTransitionInstruction = "verbal_post_transition_instruction"
-        case bearingAfter = "bearing_after"
-        case beginShapeIndex = "begin_shape_index"
-        case endShapeIndex = "end_shape_index"
-        case streetNames = "street_names"
-    }
 }
 
 // MARK: - Parsed Route (ready for navigation)
