@@ -20,6 +20,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.osprey74.rindo
+        DEVELOPMENT_TEAM: 9L6A9KDH5P
+        CODE_SIGN_STYLE: Automatic
         SWIFT_STRICT_CONCURRENCY: complete
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor

@@ -5,15 +5,16 @@
 
 ## 進捗サマリー
 
-- 現在のフェーズ: **Phase iOS-2 着手前**（Phase iOS-1 完了）
+- 現在のフェーズ: **Phase iOS-3 着手前**（Phase iOS-1, iOS-2 完了）
 - 残課題: 大規模自転車道（large_scale）の強調表示は iOS-1 では見送り、必要に応じて後続フェーズで対応
+- 残課題: 地点タップでポップオーバー表示（Phase iOS-2 の軽微な残り、必要に応じて後続で対応）
 
 ## フェーズ別ステータス
 
 | Phase | 内容 | ステータス |
 |---|---|---|
 | iOS-1 | プロジェクト初期化・地図表示 | ✅ 完了 |
-| iOS-2 | 認証・ルート取り込み・地点表示 | 未着手 |
+| iOS-2 | 認証・ルート取り込み・地点表示 | ✅ 完了 |
 | iOS-3 | リアルタイム走行情報・GPS ログ記録 | 未着手 |
 | iOS-4 | ナビゲーション + 音声案内 | 未着手 |
 | iOS-5 | オフラインマップ・走行モード・リマインダー | 未着手 |
@@ -77,40 +78,51 @@
 
 ---
 
-## Phase iOS-2: 認証・ルート取り込み・地点表示
+## Phase iOS-2: 認証・ルート取り込み・地点表示 ✅
 
 ### 認証基盤
 
-- [ ] `AuthService`（@Observable）
-- [ ] `KeychainStore`（トークン保存）
-- [ ] `AppConfig.swift` で開発/本番 URL 切替（`#if DEBUG`）
+- [x] `AuthService`（@Observable、@MainActor）
+- [x] `KeychainStore`（Security framework、save/load/delete）
+- [x] `AppConfig.swift` で開発/本番 URL 切替（`#if DEBUG`、apiBaseURL + caddyBaseURL）
 
 ### ログイン
 
-- [ ] `LoginView`（「ログイン」ボタンのみのシンプル UI）
-- [ ] `POST /api/auth/login` でセッショントークン取得
-- [ ] レスポンスのセッショントークンを Keychain に保存
-- [ ] 起動時に Keychain から復元 → `GET /api/auth/me` で検証
-- [ ] `POST /api/auth/logout` 実装
+- [x] `LoginView`（「ログイン」ボタンのみのシンプル UI）
+- [x] `POST /api/auth/login` でセッショントークン取得
+- [x] レスポンスのセッショントークンを Keychain に保存
+- [x] 起動時に Keychain から復元 → `GET /api/auth/me` で検証
+- [x] `POST /api/auth/logout` 実装
+- [x] `RindoApp` で認証状態に応じて LoginView / MapScreen を切替
 
 ### ルート取り込み
 
-- [ ] `SavedRoutesView`（一覧画面）
-- [ ] `GET /api/routes`
-- [ ] タップで地図に表示（waypoints を MLNShapeSource に投入）
-- [ ] ルート詳細（距離・所要時間・標高プロファイル）
+- [x] `SavedRoutesPanel`（一覧画面、sheet で表示）
+- [x] `GET /api/routes`
+- [x] タップで地図にルートポリライン表示（青線 + 白ハロ + ウェイポイント円マーカー）
+- [x] ルート詳細（距離・所要時間・上昇量をヘッダーに表示）
+- [x] ルート選択時にカメラを自動フィット
 
 ### 標高プロファイル
 
-- [ ] ElevationChart（Swift Charts 使用、横向き全ルート確認）
-- [ ] `GET /api/elevation` で 100 サンプル取得 + 線形補間
+- [x] `ElevationService`（OpenTopoData SRTM 30m、60 サンプルにダウンサンプリング）
+- [x] `ElevationChart`（Swift Charts、AreaMark + LineMark、展開/折り畳み可）
+- [x] 総距離・総上昇/下降・最大勾配・最低/最高標高の統計表示
 
 ### 地点表示
 
-- [ ] `SavedLocationsView`（一覧）
-- [ ] `GET /api/locations`
-- [ ] 地図上に SymbolStyleLayer で🏠/🏢/⭐/📍 アイコン表示
-- [ ] タップでポップオーバー（名前・カテゴリ・備考）
+- [x] `SavedLocationsPanel`（カテゴリ別セクション、sheet で表示）
+- [x] `GET /api/locations`
+- [x] 地図上にカテゴリ別マーカー表示（CircleStyleLayer + emoji SymbolStyleLayer）
+- [x] 地点選択で地図をフォーカス（zoom 15）
+- [ ] タップでポップオーバー（名前・カテゴリ・備考）→ 後続フェーズで対応
+
+### Codable モデル
+
+- [x] `AuthModels`（LoginResponse, UserResponse, User）
+- [x] `SavedRoute`（GeoJSONLineString 含む、coordinates → CLLocationCoordinate2D 変換）
+- [x] `SavedLocation`（LocationCategory enum: home/work/favorite/other + emoji/displayName）
+- [x] `APIClient` 拡張（トークン管理、POST 対応、baseURL オーバーライド）
 
 ### 動作確認
 
