@@ -26,6 +26,8 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
 
     /// 走行記録（セット時、位置更新を RideRecorder にも転送）
     var rideRecorder: RideRecorder?
+    /// 位置更新コールバック（NavigationManager 更新用）
+    var onLocationUpdate: ((CLLocation) -> Void)?
 
     // 内部
     private var lastLocation: CLLocation?
@@ -100,6 +102,9 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
 
         // 走行記録に転送
         rideRecorder?.handleLocation(location)
+
+        // ナビ更新に転送
+        onLocationUpdate?(location)
     }
 
     private func checkDeviation(_ location: CLLocation) {

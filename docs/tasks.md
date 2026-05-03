@@ -5,7 +5,7 @@
 
 ## 進捗サマリー
 
-- 現在のフェーズ: **Phase iOS-4 着手前**（Phase iOS-1, iOS-2, iOS-3 完了）
+- 現在のフェーズ: **Phase iOS-5 着手前**（Phase iOS-1〜4 完了）
 - 残課題: 大規模自転車道（large_scale）の強調表示は iOS-1 では見送り、必要に応じて後続フェーズで対応
 - 残課題: 地点タップでポップオーバー表示（Phase iOS-2 の軽微な残り、必要に応じて後続で対応）
 
@@ -16,7 +16,7 @@
 | iOS-1 | プロジェクト初期化・地図表示 | ✅ 完了 |
 | iOS-2 | 認証・ルート取り込み・地点表示 | ✅ 完了 |
 | iOS-3 | リアルタイム走行情報・GPS ログ記録 | ✅ 完了 |
-| iOS-4 | ナビゲーション + 音声案内 | 未着手 |
+| iOS-4 | ナビゲーション + 音声案内 | ✅ 完了 |
 | iOS-5 | オフラインマップ・走行モード・リマインダー | 未着手 |
 | iOS-6 | Apple Watch 連携 | 未着手 |
 | iOS-7 | 安全機能・写真スポット | 未着手 |
@@ -194,39 +194,58 @@
 
 ---
 
-## Phase iOS-4: ナビゲーション + 音声案内
+## Phase iOS-4: ナビゲーション + 音声案内 ✅
 
 ### Valhalla 連携
 
-- [ ] `POST /api/valhalla/route` でナビ用ルート取得
-- [ ] レスポンスから `legs[].maneuvers[]` を解析
-- [ ] `ManeuverParser` で日本語インストラクション抽出
+- [x] `ValhallaService`（POST /api/valhalla/route、bicycle プロファイル、日本語 directions）
+- [x] `PolylineDecoder`（Valhalla encoded polyline、precision 6）
+- [x] Codable モデル（ValhallaRouteResponse/Trip/Leg/Maneuver/Summary）
+- [x] `NavigationRoute` + `NavigationManeuver`（解析済みナビ用構造体）
 
-### 詳細ナビ画面
+### ManeuverParser
 
-- [ ] 進行方向に地図を回転（bearing アニメーション）
-- [ ] 次の分岐までの距離（リアルタイム）
-- [ ] マニューバアイコン（直進・右折・左折・Uターン等）
-- [ ] 残り距離・残り時間
+- [x] マニューバ type → SF Symbol アイコンマッピング（37 種対応）
+- [x] 目的地判定（type 4/5/6）
 
-### 簡易ナビ画面
+### 詳細ナビ画面（TurnByTurnPanel）
 
-- [ ] OLED 黒背景
-- [ ] 大きな矢印 + 距離のみ
-- [ ] 切替ボタン（地図 ⇄ 簡易）
+- [x] マニューバアイコン（青背景 60x60、SF Symbol）
+- [x] 次の分岐までの距離（リアルタイム、m/km 自動切替）
+- [x] 指示文（日本語、Valhalla `instruction`）
+- [x] 残り距離・残り時間
+- [x] 再ルート中インジケータ
 
-### 音声案内
+### 簡易ナビ画面（SimpleNavView）
 
-- [ ] AVSpeechSynthesizer + ja-JP voice
-- [ ] AVAudioSession `.playback` で背景再生
-- [ ] 50m / 100m / 200m 前トリガ + 重複防止フラグ
-- [ ] ミュート / 音量設定
+- [x] OLED 黒背景（fullScreenCover）
+- [x] 大きなマニューバアイコン（120pt）+ 距離（64pt）
+- [x] 下部バー（速度・残り距離・地図に戻るボタン）
+- [x] `persistentSystemOverlays(.hidden)` で省電力
 
-### ルート逸脱検出
+### 音声案内（VoiceGuide）
 
-- [ ] 現在地と最寄りルート点の距離を毎秒計算
-- [ ] 30m 超で「ルートを再検索しています」音声 + Valhalla 再呼び出し
-- [ ] 連続再ルート抑制（最低 30 秒間隔）
+- [x] AVSpeechSynthesizer + ja-JP voice
+- [x] AVAudioSession `.playback` + `.duckOthers` で BGM ダッキング
+- [x] 200m / 100m / 50m 前トリガ + 重複防止（spokenKeys Set）
+- [x] 到着判定（目的地 30m 以内）
+- [x] `isEnabled` フラグでミュート可
+
+### NavigationManager（進捗追跡 + 自動再ルート）
+
+- [x] ルート上の最寄り点追跡
+- [x] マニューバ通過判定（20m 以内で次に進む）
+- [x] 音声トリガ距離計算
+- [x] 30m 逸脱 → Valhalla 再ルート（30 秒クールダウン）
+- [x] 再ルート結果適用（ルート・座標・逸脱検知を更新）
+
+### MapScreen 統合
+
+- [x] サーバルート選択時に Valhalla ルート自動取得
+- [x] ナビ開始で NavigationManager + VoiceGuide 起動
+- [x] 位置更新ごとに NavigationManager 更新
+- [x] 簡易ナビ切替ボタン（「簡易」→ fullScreenCover）
+- [x] GPX ルートはライン追従ナビ（Valhalla なし）、サーバルートはターンバイターンナビ
 
 ### 動作確認
 

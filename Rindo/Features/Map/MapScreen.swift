@@ -25,6 +25,9 @@ struct MapScreen: View {
     @State private var locationService = LocationService()
     @State private var rideRecorder = RideRecorder()
     @State private var isNavigating = false
+    @State private var navManager = NavigationManager()
+    @State private var valhallaRoute: NavigationRoute?
+    @State private var showSimpleNav = false
 
     // 標高
     @State private var elevationProfile: ElevationProfile?
@@ -81,6 +84,17 @@ struct MapScreen: View {
                     .padding(.horizontal, 8)
                 }
 
+                // ターンバイターンナビ（Valhalla ルート時のみ）
+                if navManager.isActive {
+                    TurnByTurnPanel(
+                        maneuver: navManager.currentManeuver,
+                        distanceToNextM: navManager.distanceToNextManeuverM,
+                        remainingDistanceKm: navManager.remainingDistanceKm,
+                        remainingTimeSeconds: navManager.remainingTimeSeconds,
+                        isRerouting: navManager.isRerouting
+                    )
+                }
+
                 // ルート情報バー
                 if let route = selectedRoute {
                     serverRouteInfoBar(route)
@@ -89,6 +103,15 @@ struct MapScreen: View {
                 }
             }
 
+        }
+        .fullScreenCover(isPresented: $showSimpleNav) {
+            SimpleNavView(
+                maneuver: navManager.currentManeuver,
+                distanceToNextM: navManager.distanceToNextManeuverM,
+                remainingDistanceKm: navManager.remainingDistanceKm,
+                speedKmh: locationService.speedKmh,
+                onDismiss: { showSimpleNav = false }
+            )
         }
         .overlay(alignment: .topLeading) {
             // 左上ボタン群
@@ -134,6 +157,7 @@ struct MapScreen: View {
         .task {
             await loadAllLayers()
             setupDeviationFeedback()
+            setupNavLocationUpdates()
         }
     }
 
@@ -169,6 +193,12 @@ struct MapScreen: View {
                         startNavigation()
                     }
                 } else if isNavigating {
+                    // 簡易ナビ切替（Valhallaルート時のみ）
+                    if navManager.isActive {
+                        sideButton(icon: "moon.fill", label: "簡易") {
+                            showSimpleNav = true
+                        }
+                    }
                     sideButton(icon: "xmark", label: "ナビ終了") {
                         stopNavigation()
                     }
@@ -359,10 +389,20 @@ struct MapScreen: View {
             locationService.startTracking()
         }
         isNavigating = true
+
+        // Valhalla ルートがある場合はターンバイターンナビを開始
+        if let vRoute = valhallaRoute {
+            navManager.start(
+                route: vRoute,
+                waypoints: selectedRoute?.waypoints.map(\.coordinate) ?? navigationCoordinates
+            )
+        }
     }
 
     private func stopNavigation() {
         isNavigating = false
+        showSimpleNav = false
+        navManager.stop()
         locationService.clearRoute()
         if !rideRecorder.isRecording {
             locationService.stopTracking()
@@ -370,10 +410,40 @@ struct MapScreen: View {
     }
 
     private func setupDeviationFeedback() {
-        locationService.onDeviation = {
+        locationService.onDeviation = { [self] in
             let feedback = UIImpactFeedbackGenerator(style: .heavy)
             feedback.impactOccurred()
             AudioServicesPlaySystemSound(1521)
+
+            // Valhalla ナビ中は自動再ルート
+            if navManager.isActive, let loc = locationService.currentLocation {
+                if let request = navManager.updateLocation(loc) {
+                    Task { await performReroute(request) }
+                }
+            }
+        }
+    }
+
+    private func setupNavLocationUpdates() {
+        locationService.onLocationUpdate = { [self] location in
+            guard navManager.isActive else { return }
+            if let request = navManager.updateLocation(location) {
+                Task { await performReroute(request) }
+            }
+        }
+    }
+
+    private func performReroute(_ request: NavigationManager.RerouteRequest) async {
+        do {
+            let newRoute = try await ValhallaService.fetchRoute(
+                waypoints: [request.from, request.to]
+            )
+            navManager.applyReroute(newRoute)
+            valhallaRoute = newRoute
+            navigationCoordinates = newRoute.coordinates
+            locationService.setRoute(newRoute.coordinates)
+        } catch {
+            navManager.rerouteFailed()
         }
     }
 
@@ -383,6 +453,22 @@ struct MapScreen: View {
         clearRoute()
         selectedRoute = route
         navigationCoordinates = route.coordinates
+
+        // Valhalla ルートを取得（ターンバイターンナビ用）
+        Task {
+            do {
+                valhallaRoute = try await ValhallaService.fetchRoute(
+                    waypoints: route.waypoints.map(\.coordinate)
+                )
+                // Valhalla のルート形状で上書き（より正確）
+                if let vRoute = valhallaRoute {
+                    navigationCoordinates = vRoute.coordinates
+                }
+            } catch {
+                // Valhalla 失敗時はライン追従ナビのみ
+                valhallaRoute = nil
+            }
+        }
 
         Task {
             isLoadingElevation = true
@@ -411,6 +497,7 @@ struct MapScreen: View {
         selectedRoute = nil
         activeImportedRoute = nil
         navigationCoordinates = []
+        valhallaRoute = nil
         elevationProfile = nil
         focusCoordinate = nil
     }
