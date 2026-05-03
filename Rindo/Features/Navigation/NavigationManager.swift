@@ -26,6 +26,10 @@ final class NavigationManager {
     // 依存
     let voiceGuide = VoiceGuide()
     private var lastRerouteTime: Date?
+    private var totalTraveledM: Double = 0
+    private var lastUpdateLocation: CLLocation?
+    /// ルート総距離の半分以上走るまで到着判定しない
+    private var arrivalThresholdM: Double = 0
     private static let rerouteCooldownSeconds: TimeInterval = 30
     private static let deviationThresholdM: Double = 30
 
@@ -44,6 +48,9 @@ final class NavigationManager {
         remainingDistanceKm = route.totalDistanceKm
         remainingTimeSeconds = route.totalTimeSeconds
         isActive = true
+        totalTraveledM = 0
+        lastUpdateLocation = nil
+        arrivalThresholdM = route.totalDistanceKm * 1000 * 0.5
         voiceGuide.reset()
 
         // 開始音声
@@ -64,14 +71,21 @@ final class NavigationManager {
     func updateLocation(_ location: CLLocation) -> RerouteRequest? {
         guard isActive, let route else { return nil }
 
+        // 走行距離を累積（到着判定に使用）
+        if let last = lastUpdateLocation {
+            totalTraveledM += location.distance(from: last)
+        }
+        lastUpdateLocation = location
+
         let current = location.coordinate
         let coords = route.coordinates
 
         // ルート上の最寄り点を見つける
         let (nearestIndex, nearestDistance) = findNearestPoint(to: current, on: coords)
 
-        // 逸脱チェック
-        if nearestDistance > Self.deviationThresholdM {
+        // 逸脱チェック（ルート総距離の10%以上走るまでは逸脱判定しない — 周回ルート対策）
+        let minTravelForDeviation = route.totalDistanceKm * 1000 * 0.1
+        if nearestDistance > Self.deviationThresholdM && totalTraveledM > minTravelForDeviation {
             return handleDeviation(currentLocation: current)
         }
 
@@ -160,8 +174,8 @@ final class NavigationManager {
             }
         }
 
-        // 到着判定
-        if ManeuverParser.isDestination(maneuver.type) && distanceM < 30 {
+        // 到着判定（ルート総距離の半分以上走ってから判定 — 周回ルート対策）
+        if ManeuverParser.isDestination(maneuver.type) && distanceM < 30 && totalTraveledM > arrivalThresholdM {
             voiceGuide.speak("目的地に到着しました。", key: "arrival")
         }
     }

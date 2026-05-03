@@ -55,6 +55,18 @@ struct RindoMapView: UIViewRepresentable {
             let zoom = focusZoomLevel ?? 15
             mapView.setCenter(coord, zoomLevel: zoom, animated: true)
         }
+
+        // ナビ中は現在地を画面下 1/3 に追従表示
+        if isNavigating, let loc = locationService.currentLocation {
+            let coord = loc.coordinate
+            let mapHeight = mapView.frame.height
+            // 現在地を画面下 1/3 に配置するため、画面中心を北方向にオフセット
+            let offsetY = mapHeight / 6
+            let centerPoint = mapView.convert(coord, toPointTo: mapView)
+            let adjustedPoint = CGPoint(x: centerPoint.x, y: centerPoint.y - offsetY)
+            let adjustedCoord = mapView.convert(adjustedPoint, toCoordinateFrom: mapView)
+            mapView.setCenter(adjustedCoord, animated: true)
+        }
     }
 
     // MARK: - Coordinator

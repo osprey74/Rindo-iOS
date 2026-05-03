@@ -97,11 +97,13 @@ struct MapScreen: View {
                     )
                 }
 
-                // ルート情報バー
-                if let route = selectedRoute {
-                    serverRouteInfoBar(route)
-                } else if let imported = activeImportedRoute {
-                    importedRouteInfoBar(imported)
+                // ルート情報バー（ナビ中は非表示）
+                if !isNavigating {
+                    if let route = selectedRoute {
+                        serverRouteInfoBar(route)
+                    } else if let imported = activeImportedRoute {
+                        importedRouteInfoBar(imported)
+                    }
                 }
             }
 

@@ -6,9 +6,6 @@ struct RideHistoryPanel: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \RideLog.startedAt, order: .reverse) private var rides: [RideLog]
 
-    @State private var gpxExportURL: URL?
-    @State private var showShareSheet = false
-
     var onSelect: ((RideLog) -> Void)?
 
     var body: some View {
@@ -31,11 +28,6 @@ struct RideHistoryPanel: View {
                     Button("閉じる") { dismiss() }
                 }
             }
-            .sheet(isPresented: $showShareSheet) {
-                if let url = gpxExportURL {
-                    ShareSheet(items: [url])
-                }
-            }
         }
     }
 
@@ -43,7 +35,6 @@ struct RideHistoryPanel: View {
         List {
             ForEach(rides) { ride in
                 VStack(alignment: .leading, spacing: 6) {
-                    // タップでマップ表示
                     Button {
                         onSelect?(ride)
                         dismiss()
@@ -75,12 +66,12 @@ struct RideHistoryPanel: View {
                         }
                     }
 
-                    // GPX エクスポートボタン
-                    Button {
-                        exportGPX(ride)
-                    } label: {
-                        Label("GPX エクスポート", systemImage: "square.and.arrow.up")
-                            .font(.caption)
+                    // GPX エクスポート — ShareLink で直接共有（シートの入れ子問題を回避）
+                    if let gpxURL = gpxTempURL(for: ride) {
+                        ShareLink(item: gpxURL) {
+                            Label("GPX エクスポート", systemImage: "square.and.arrow.up")
+                                .font(.caption)
+                        }
                     }
                 }
                 .padding(.vertical, 4)
@@ -89,13 +80,9 @@ struct RideHistoryPanel: View {
         }
     }
 
-    private func exportGPX(_ ride: RideLog) {
-        do {
-            gpxExportURL = try GPXExporter.writeToTempFile(from: ride)
-            showShareSheet = true
-        } catch {
-            // エクスポート失敗は静かに無視
-        }
+    /// GPX を一時ファイルに書き出して URL を返す
+    private func gpxTempURL(for ride: RideLog) -> URL? {
+        try? GPXExporter.writeToTempFile(from: ride)
     }
 
     private func deleteRides(at offsets: IndexSet) {
@@ -109,15 +96,4 @@ struct RideHistoryPanel: View {
         let m = Int(minutes) % 60
         return h > 0 ? "\(h)h \(m)min" : "\(m)min"
     }
-}
-
-/// UIActivityViewController を SwiftUI で使うラッパー
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
