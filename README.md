@@ -48,7 +48,7 @@ Web 版から取り込む機能（共通）:
 - **モーション**: CoreMotion（転倒検知）
 - **ヘルス連携**: HealthKit（体重取得・ワークアウト記録）
 - **音声**: AVSpeechSynthesizer
-- **認証**: Sign in with Apple（`ASAuthorizationAppleIDProvider`）
+- **認証**: シングルユーザー・セッショントークン（`POST /api/auth/login` でトークン取得 → Keychain に保存）
 - **API クライアント**: URLSession + Codable
 - **バックエンド**: [rindo-api](https://github.com/osprey74/rindo-api)（Bun + Hono + SQLite、Mac mini @ 自宅 + Tailscale 経由）
 - **依存管理**: Swift Package Manager（SPM）
@@ -65,7 +65,7 @@ Web 版から取り込む機能（共通）:
 ```
 
 - iPhone → Tailscale 経由で API アクセス（自宅 LAN 外でも到達可能）
-- ログイン: Sign in with Apple → サーバ側でセッショントークン発行
+- ログイン: 「ログイン」ボタン → `POST /api/auth/login` で seeded 単一ユーザーのセッショントークン取得 → Keychain に保存（個人利用・Tailnet 内限定運用前提）
 - ルート同期: Web で計画 → サーバ保存 → iOS が `GET /api/routes` で取り込み
 - 走行ログ: iOS で記録 → `POST /api/rides` でアップロード（将来 Web で履歴閲覧）
 
@@ -75,7 +75,7 @@ Web 版から取り込む機能（共通）:
 
 - macOS 14（Sonoma）以降
 - Xcode 16+
-- Apple Developer Program（Sign in with Apple・HealthKit 利用に必須）
+- Apple Developer Program（HealthKit 利用に必須。AppStore 公開予定なし、Sign in with Apple は使わないので、HealthKit を諦めれば Personal Team でもデバッグ可能）
 - 実機テスト用 iPhone（iOS 17+）
 - Tailscale クライアント（Mac mini と iPhone 双方）
 
@@ -100,7 +100,6 @@ Xcode プロジェクト作成時の設定:
 - Minimum Deployments: iOS 17.0
 
 Capabilities（Signing & Capabilities タブで追加）:
-- Sign in with Apple
 - HealthKit
 - Background Modes（`Location updates` + `Audio` 走行中の音声案内）
 - Push Notifications（将来用）

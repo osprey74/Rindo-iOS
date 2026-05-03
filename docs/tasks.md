@@ -28,9 +28,9 @@
 
 - [ ] Mac mini で `git clone` 完了
 - [ ] Xcode プロジェクト作成（Product Name: `Rindo`、Bundle ID: `com.osprey74.rindo`、iOS 17.0、SwiftUI）
-- [ ] Apple Developer Program 加入確認（Personal Team でも開発は可能、Sign in with Apple は要 $99 契約）
+- [ ] Apple Developer Program 加入確認（HealthKit 利用予定なら $99 契約必須、HealthKit 諦めれば Personal Team で OK）
 - [ ] Signing & Capabilities 設定
-  - [ ] Sign in with Apple
+  - [ ] HealthKit（Apple Developer Program 契約時のみ）
   - [ ] Background Modes（Location updates + Audio）
 - [ ] Info.plist 必須キー追加
   - [ ] `NSLocationWhenInUseUsageDescription`
@@ -82,17 +82,13 @@
 - [ ] `KeychainStore`（トークン保存）
 - [ ] `AppConfig.swift` で開発/本番 URL 切替（`#if DEBUG`）
 
-### Sign in with Apple
+### ログイン
 
-- [ ] AppleSignInButton（ASAuthorizationAppleIDButton ラッパ）
-- [ ] ID トークン取得 → `POST /api/auth/apple`
+- [ ] `LoginView`（「ログイン」ボタンのみのシンプル UI）
+- [ ] `POST /api/auth/login` でセッショントークン取得
 - [ ] レスポンスのセッショントークンを Keychain に保存
 - [ ] 起動時に Keychain から復元 → `GET /api/auth/me` で検証
-
-### dev-login（DEBUG ビルドのみ）
-
-- [ ] dev-login UI（ハンドル入力）
-- [ ] `POST /api/auth/dev-login`
+- [ ] `POST /api/auth/logout` 実装
 
 ### ルート取り込み
 
@@ -115,7 +111,7 @@
 
 ### 動作確認
 
-- [ ] 実機で Sign in with Apple ログイン
+- [ ] 実機でログインボタンを押すとセッショントークンが Keychain に保存される
 - [ ] Web 版で保存したルートが iOS で表示される
 - [ ] Web 版で登録した地点が地図に表示される
 
@@ -300,15 +296,11 @@
 
 ---
 
-## 認証・接続周りの先行整備（並行で進めて良い）
+## 接続周りの先行整備（並行で進めて良い）
 
 - [ ] rindo-api の `POST /api/rides` エンドポイント設計確定（GPX or JSON track points）
-- [ ] Apple Sign in 用の Apple Developer Console 設定
-  - [ ] App ID 作成（Bundle ID `com.osprey74.rindo`、Sign in with Apple ON）
-  - [ ] Service ID（Web 版用、既存があれば連携）
-  - [ ] Key 作成 + サーバ側 `apple-jwt.ts` の `aud` 設定確認
-- [ ] HealthKit 用 Capability 申請
-- [ ] iOS / Web ログイン整合性検証（同一 Apple ID で双方からアクセス可能か）
+- [ ] HealthKit 用 Capability 申請（Apple Developer Program 契約時のみ）
+- [ ] iOS から Tailscale 経由 `https://home-mac-mini.taila6ea.ts.net/api/auth/login` 疎通確認
 
 ---
 

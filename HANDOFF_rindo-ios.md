@@ -26,7 +26,7 @@
 | モーション | CoreMotion | 勾配計算・転倒検知 |
 | ヘルス | HealthKit | 体重取得（消費カロリー）・ワークアウト記録 |
 | 音声 | AVSpeechSynthesizer | 標準・追加課金なし |
-| 認証 | Sign in with Apple | Web 版と同じ ID プロバイダ |
+| 認証 | シングルユーザー・セッショントークン | 個人利用・Tailnet 限定運用、AppStore 公開予定なし |
 | API | URLSession + Codable | 軽量で十分 |
 | 永続化 | SwiftData（iOS 17+）or Core Data | ローカルキャッシュ・走行ログ一時保存 |
 | ウォッチ | WatchConnectivity + WatchKit | Apple Watch 連携 |
@@ -85,7 +85,7 @@ Rindo/
 │   │   │   ├── GPXExporter.swift     // GPX 1.1 出力
 │   │   │   └── CalorieCalculator.swift
 │   │   ├── Auth/
-│   │   │   ├── AppleSignInButton.swift
+│   │   │   ├── LoginView.swift       // 「ログイン」ボタンのみのシンプル UI
 │   │   │   └── AuthService.swift     // セッショントークン管理（Keychain）
 │   │   ├── Routes/
 │   │   │   └── SavedRoutesView.swift // Web で保存したルート一覧・取り込み
@@ -300,37 +300,37 @@ func calorieBurn(weight: Double, hours: Double, gradePercent: Double) -> Double 
 
 ## 認証フロー
 
-### Sign in with Apple（実機）
+Rindo は個人利用・Tailnet 内限定運用の前提（AppStore 公開予定なし、不特定多数への公開予定なし）のため、マルチユーザー認証は採用しない。クライアントは「ログイン」ボタン一発で seeded 単一ユーザー（`users.id = 1`）のセッショントークンを取得し、以降の API 呼び出しに `Authorization: Bearer ...` で付加する。
 
 ```swift
-import AuthenticationServices
+@Observable
+class AuthService {
+    private(set) var token: String?
 
-class AuthService: NSObject, ASAuthorizationControllerDelegate {
-    func signIn() {
-        let request = ASAuthorizationAppleIDProvider().createRequest()
-        request.requestedScopes = [.fullName, .email]
-        let controller = ASAuthorizationController(authorizationRequests: [request])
-        controller.delegate = self
-        controller.performRequests()
+    func login() async throws {
+        let body = try JSONSerialization.data(withJSONObject: [:])
+        var req = URLRequest(url: URL(string: "\(AppConfig.apiBase)/api/auth/login")!)
+        req.httpMethod = "POST"
+        req.httpBody = body
+        let (data, _) = try await URLSession.shared.data(for: req)
+        let resp = try JSONDecoder().decode(LoginResponse.self, from: data)
+        token = resp.token
+        try Keychain.save(key: "rindo.token", value: resp.token)
     }
 
-    func authorizationController(_ controller: ASAuthorizationController,
-                                 didCompleteWithAuthorization authorization: ASAuthorization) {
-        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
-              let idTokenData = credential.identityToken,
-              let idToken = String(data: idTokenData, encoding: .utf8) else { return }
+    func logout() async {
+        // POST /api/auth/logout (best-effort)
+        token = nil
+        try? Keychain.delete(key: "rindo.token")
+    }
 
-        // バックエンドに POST /api/auth/apple { id_token: idToken }
-        // → セッショントークンを Keychain に保存
+    struct LoginResponse: Decodable {
+        let token: String
     }
 }
 ```
 
-### dev-login（シミュレータ・開発時のみ）
-
-- Sign in with Apple は実機 + Apple ID サインイン済みが必須
-- シミュレータでは `POST /api/auth/dev-login` でハンドル指定ログインに切替
-- `AppConfig.swift` で `#if DEBUG` 分岐
+将来的に AppStore 公開や複数ユーザー対応をする場合は、Sign in with Apple または OAuth プロバイダを別途追加する。バックエンド（rindo-api）にはその際の拡張余地として `users.apple_user_id` カラムが残してある。
 
 ---
 
@@ -366,7 +366,7 @@ class AuthService: NSObject, ASAuthorizationControllerDelegate {
 
 ### Phase iOS-2: 認証・ルート取り込み・地点表示
 
-- Sign in with Apple 実装 + バックエンド連携
+- 「ログイン」ボタン → `POST /api/auth/login` 実装
 - Keychain によるセッショントークン管理
 - `GET /api/routes` 一覧画面 → タップで地図に表示
 - 地点（自宅・職場・お気に入り）一覧と地図上アイコン表示
@@ -407,9 +407,8 @@ class AuthService: NSObject, ASAuthorizationControllerDelegate {
 
 ## 既知の課題・制約
 
-- Apple Sign in は実機 + Apple Developer Program（$99/年）契約必須。シミュレータでは dev-login 利用
-- HealthKit 対応も Apple Developer Program 必須
-- バックグラウンド位置情報は審査時に詳細な理由説明が必要
+- HealthKit 利用には Apple Developer Program（$99/年）契約必須。HealthKit を諦めれば Personal Team でも開発可能（体重は手入力フォールバック）
+- AppStore 公開予定なし（個人利用・Tailnet 限定）。Sign in with Apple は実装しない
 - MapLibre Native iOS のオフライン機能はベータ含む。動作検証必要
 - watchOS 連携は別ターゲット必要 + Watch 実機テスト推奨
 - 道央圏 PBF（Valhalla）は Mac mini @ 自宅で稼働。インターネット切断時のオフラインルーティングは未対応（将来検討）
@@ -420,7 +419,6 @@ class AuthService: NSObject, ASAuthorizationControllerDelegate {
 
 - MapLibre Native iOS: https://github.com/maplibre/maplibre-native
 - MapLibre iOS Examples: https://maplibre.org/maplibre-native/ios/api/
-- Sign in with Apple: https://developer.apple.com/documentation/sign_in_with_apple
 - HealthKit: https://developer.apple.com/documentation/healthkit
 - WatchConnectivity: https://developer.apple.com/documentation/watchconnectivity
 - Valhalla `/route` レスポンス形式: https://valhalla.github.io/valhalla/api/turn-by-turn/api-reference/
