@@ -5,14 +5,14 @@
 
 ## 進捗サマリー
 
-- 完了: 0 / 全タスク（着手前）
-- 現在のフェーズ: **未着手**（Phase iOS-1 着手前）
+- 現在のフェーズ: **Phase iOS-2 着手前**（Phase iOS-1 完了）
+- 残課題: 大規模自転車道（large_scale）の強調表示は iOS-1 では見送り、必要に応じて後続フェーズで対応
 
 ## フェーズ別ステータス
 
 | Phase | 内容 | ステータス |
 |---|---|---|
-| iOS-1 | プロジェクト初期化・地図表示 | 未着手 |
+| iOS-1 | プロジェクト初期化・地図表示 | ✅ 完了 |
 | iOS-2 | 認証・ルート取り込み・地点表示 | 未着手 |
 | iOS-3 | リアルタイム走行情報・GPS ログ記録 | 未着手 |
 | iOS-4 | ナビゲーション + 音声案内 | 未着手 |
@@ -22,55 +22,58 @@
 
 ---
 
-## Phase iOS-1: プロジェクト初期化と地図表示
+## Phase iOS-1: プロジェクト初期化と地図表示 ✅
 
 ### セットアップ
 
-- [ ] Mac mini で `git clone` 完了
-- [ ] Xcode プロジェクト作成（Product Name: `Rindo`、Bundle ID: `com.osprey74.rindo`、iOS 17.0、SwiftUI）
+- [x] Mac mini で `git clone` 完了
+- [x] Xcode プロジェクト作成（XcodeGen ベース、`project.yml` + `Rindo.xcodeproj` 生成）
+- [x] アプリ表示名 `Rindo`、Bundle ID `com.osprey74.rindo`、iOS 17.0、SwiftUI
+- [x] アプリアイコン（竜胆の花モチーフ）
 - [ ] Apple Developer Program 加入確認（HealthKit 利用予定なら $99 契約必須、HealthKit 諦めれば Personal Team で OK）
-- [ ] Signing & Capabilities 設定
-  - [ ] HealthKit（Apple Developer Program 契約時のみ）
-  - [ ] Background Modes（Location updates + Audio）
-- [ ] Info.plist 必須キー追加
-  - [ ] `NSLocationWhenInUseUsageDescription`
-  - [ ] `NSLocationAlwaysAndWhenInUseUsageDescription`
-  - [ ] `NSMotionUsageDescription`
+- [ ] Signing & Capabilities 設定（後続フェーズで追加）
+  - [ ] HealthKit（Apple Developer Program 契約時のみ。Phase iOS-3）
+  - [ ] Background Modes（Location updates + Audio。Phase iOS-3）
+- Info.plist 必須キー追加
+  - [x] `NSLocationWhenInUseUsageDescription`
+  - [ ] `NSLocationAlwaysAndWhenInUseUsageDescription`（Phase iOS-3 でバックグラウンド位置情報を有効化する際に追加）
+  - [ ] `NSMotionUsageDescription`（Phase iOS-3 / iOS-7 で必要）
 
 ### 依存追加
 
-- [ ] MapLibre Native iOS を SPM で追加
-- [ ] `Package.resolved` を `.gitignore` 通り無視確認
+- [x] MapLibre Native iOS 6.26.0 を SPM で追加
+- [x] `Package.resolved` を `.gitignore` 通り無視確認
 
 ### 地図表示
 
-- [ ] `MapView`（UIViewRepresentable）で MLNMapView をラップ
-- [ ] OSM 標準タイル style.json をロード
-- [ ] 札幌中心（lat: 43.0686, lon: 141.3468、zoom: 12）で初期表示
-- [ ] 現在地表示（CLLocationManager + showsUserLocation）
+- [x] `RindoMapView`（UIViewRepresentable）で MLNMapView をラップ
+- [x] OSM 標準タイル `osm-style.json` をバンドルしてロード
+- [x] 札幌中心（lat: 43.0686, lon: 141.3468、zoom: 12）で初期表示
+- [x] 現在地表示（`mapView.showsUserLocation = true`）
+- [x] ピンチ回転を無効化（北固定）
 
 ### サイクリングロード描画
 
-- [ ] `APIClient` 雛形（URLSession ラッパ）
-- [ ] `GET /api/cycling-roads` で Layer 3 取得
-- [ ] `GET /api/overpass` で Layer 1（OSM cycleway）
-- [ ] `GET /api/routes/bicycle-relations`（または既存エンドポイント）で Layer 2
-- [ ] MLNShapeSource + MLNLineStyleLayer で描画
-  - [ ] Layer 1（緑、幅 3）
-  - [ ] Layer 2（青、幅 4）
-  - [ ] Layer 3 専用（オレンジ実線、幅 4）
-  - [ ] Layer 3 共用（オレンジ破線、幅 2）
-  - [ ] 大規模自転車道フラグ（large_scale）の強調表示
+- [x] `APIClient` 雛形（actor ベース、URLSession ラッパ）
+- [x] `GET /api/cycling-roads` で Layer 3 取得
+- [x] Layer 1（OSM cycleway）— バンドル済み GeoJSON（`sapporo-osm-cycleways.geojson`）から表示。Overpass API 経由は採用せず（実装簡素化・オフライン対応のためバンドル方式）
+- [x] Layer 2（OSM bicycle routes）— バンドル済み GeoJSON（`dosou-osm-bicycle-routes.geojson`）から表示
+- [x] MLNShapeSource + MLNLineStyleLayer で描画（`MapLayerStyle.swift` で Web 版と同一の色・幅・破線パターンを定義）
+  - [x] Layer 1（緑 #1D9E75、幅 3、不透明度 0.85）
+  - [x] Layer 2（青 #3C7B91、幅 4、不透明度 0.9）
+  - [x] Layer 3 専用（オレンジ #E65C00 実線、幅 4、`road_type == 'exclusive'`）
+  - [x] Layer 3 共用（オレンジ #E65C00 破線 [4,2]、幅 2、`road_type == 'shared'`）
+  - [ ] 大規模自転車道フラグ（large_scale）の強調表示（後続フェーズに送り）
 
 ### 出典・ライセンス画面
 
-- [ ] AttributionView（モーダル）
-- [ ] © OpenStreetMap、北海道建設部土木局、札幌市建設局、Valhalla、JMA、SRTM の表記
+- [x] AttributionView（モーダル）
+- [x] © OpenStreetMap、北海道建設部土木局、札幌市建設局、Valhalla、JMA、SRTM の表記
 
 ### 動作確認
 
-- [ ] シミュレータで地図表示
-- [ ] 実機（Tailscale 経由）でサイクリングロードが表示される
+- [x] シミュレータで地図表示
+- [x] 実機（Tailscale 経由）でサイクリングロードが表示される
 
 ---
 
