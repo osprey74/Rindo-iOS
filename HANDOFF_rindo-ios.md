@@ -13,6 +13,12 @@
 - **対応 OS**: iOS 17.0 以降（推奨 iOS 18+）
 - **言語**: 日本語（多言語化計画なし）
 
+### 運用前提
+
+- **あくまで個人使用**。AppStore 公開や不特定多数公開の予定なし
+- **Web/バックエンドは自宅 M2 Mac mini で稼働**し、iPhone から **Tailscale ネットワーク経由**でアクセスする（`https://home-mac-mini.taila6ea.ts.net`）
+- **Apple ID による認証も採用しない**。シングルユーザー・セッショントークン方式（`POST /api/auth/login` で seeded 単一ユーザーのトークン取得 → Keychain 保存）で十分
+
 ---
 
 ## 技術スタック
@@ -26,7 +32,7 @@
 | モーション | CoreMotion | 勾配計算・転倒検知 |
 | ヘルス | HealthKit | 体重取得（消費カロリー）・ワークアウト記録 |
 | 音声 | AVSpeechSynthesizer | 標準・追加課金なし |
-| 認証 | シングルユーザー・セッショントークン | 個人利用・Tailnet 限定運用、AppStore 公開予定なし |
+| 認証 | シングルユーザー・セッショントークン | 個人利用・Tailnet 限定運用、AppStore 公開予定なし、Apple ID 認証も不採用 |
 | API | URLSession + Codable | 軽量で十分 |
 | 永続化 | SwiftData（iOS 17+）or Core Data | ローカルキャッシュ・走行ログ一時保存 |
 | ウォッチ | WatchConnectivity + WatchKit | Apple Watch 連携 |
@@ -144,34 +150,55 @@ Rindo/
 
 ### 認証ヘッダ
 
-- セッショントークン方式（Web 版と共通）
+- シングルユーザー・セッショントークン方式（Web 版と共通）
 - iOS 側は `Authorization: Bearer <token>` で送信
 - トークンは Keychain に保存（`KeychainStore.swift`）
+- **Apple ID 認証は使わない**。`/api/auth/apple/...` 系のエンドポイントは rindo-api にも存在しない
 
 ### 主要エンドポイント
 
+rindo-api 直接ハンドリング:
+
 ```
-POST /api/auth/apple             { id_token } → { token, user }
-POST /api/auth/dev-login         { handle }   → { token, user }       開発用のみ
-POST /api/auth/logout
-GET  /api/auth/me                              → { user }
+# 公開（認証不要）
+POST /api/auth/login                  → { token, user }   seeded 単一ユーザーのセッション発行
+POST /api/auth/logout                 → { ok: true }      best-effort
 
-GET  /api/routes                               → SavedRoute[]
-GET  /api/routes/:id                           → SavedRoute（取り込み用）
-
-GET  /api/locations                            → SavedLocation[]
-POST /api/locations              { name, category, lon, lat, notes }
-PUT  /api/locations/:id          { ... }
-DEL  /api/locations/:id
-
-POST /api/rides                  { gpx, summary } → 走行ログアップロード（iOS 専用）
-
-GET  /api/cycling-roads                        → Layer 3（GeoJSON FeatureCollection）
-POST /api/valhalla/route         { locations, costing: 'bicycle', ... }
-GET  /api/elevation?coords=lat,lon|lat,lon
-GET  /api/overpass?...                         → コンビニ・駐車場検索
-GET  /api/weather/:areaCode                    → JMA 天気予報
+# 要認証（Authorization: Bearer <token>）
+GET  /api/auth/me                     → { user }
+GET  /api/routes                      → SavedRoute[]
+GET  /api/routes/:id                  → SavedRoute（取り込み用）
+POST /api/routes                      → SavedRoute        ルート作成
+PUT  /api/routes/:id                  → SavedRoute        ルート更新
+DELETE /api/routes/:id                → { id }
+GET  /api/locations                   → SavedLocation[]
+POST /api/locations  { name, category, lon, lat, notes }
+PUT  /api/locations/:id  { ... }
+DELETE /api/locations/:id
+GET  /api/cycling-roads               → Layer 3（GeoJSON FeatureCollection）
+                                        properties.large_scale=true は北海道大規模自転車道（CC-BY）
+                                        properties.large_scale=false は札幌市公式 13 サイクリングロード
+GET  /api/cycling-roads/:id           → GeoJSON Feature
+GET  /api/profile                     → Profile（体重等のユーザー設定）
+PUT  /api/profile                     → Profile
 ```
+
+Caddy 経由のリバースプロキシ（rindo-api を経由しない外部サービス）:
+
+```
+POST /api/valhalla/route  { locations, costing: 'bicycle', ... }
+GET  /api/elevation?coords=lat,lon|lat,lon                          → OpenTopoData
+GET  /api/overpass?...                                              → コンビニ・駐車場検索
+GET  /api/weather/:areaCode                                         → JMA 天気予報
+```
+
+将来追加予定（**現時点では rindo-api 未実装**）:
+
+```
+POST /api/rides   { gpx, summary } → 走行ログアップロード（iOS 専用）
+```
+
+→ iOS Phase 3（GPS ログ記録）着手時に rindo-api 側で `rides` テーブル＋ハンドラを新規実装する必要がある。スキーマは [rindo-api/migrations/](https://github.com/osprey74/rindo-api/tree/main/migrations) に新規マイグレーション（`002_rides.sql`）として追加する想定。
 
 ### Codable モデル例
 
@@ -209,11 +236,13 @@ struct SavedLocation: Codable, Identifiable {
 
 ### 1. 地図表示（Phase iOS-1）
 
-- MapLibre Native iOS で OSM 標準タイルを表示
-- 起動時に `GET /api/cycling-roads` で Layer 3 を取得 → `MLNShapeSource` に投入
-- Layer 1（OSM cycleway）・Layer 2（北海道大規模自転車道）も同様
-- スタイル定義は Web 版 `mapStyles.ts` を Swift に移植
-- カラー・幅は Web 版と完全一致させる（一貫性のため）
+- MapLibre Native iOS で OSM 標準タイル（`https://tile.openstreetmap.org/{z}/{x}/{y}.png`、max zoom 19）を表示
+- レイヤー構成は Web 実装（[Rindo-web/src/components/MapView.tsx](https://github.com/osprey74/Rindo-web/blob/main/src/components/MapView.tsx) の `setupLayers`）と同じ。色・幅は Web 版完全一致
+  - **Layer 1**: OSM `highway=cycleway`（緑、線幅 3）。Web 版と同じ `sapporo-osm-cycleways.geojson` をアプリリソースに**バンドル**して `MLNShapeSource` に投入
+  - **Layer 2**: OSM `route=bicycle` リレーション（青、線幅 4）。Web 版と同じ `dosou-osm-bicycle-routes.geojson` をバンドル
+  - **Layer 3**: 起動時に `GET /api/cycling-roads` で取得 → `MLNShapeSource` に投入。`properties.road_type` で実線/破線を分岐、`properties.large_scale` は出典表示の判別用
+- Layer 1/2 は **個人使用前提でユーザーが変更不可な固定コンテンツのため、ランタイムで Overpass を叩かずバンドル GeoJSON を採用**。データ更新は Web 側のスクリプト（`scripts/fetch-osm-*.ts`）を実行 → 生成された GeoJSON を iOS リポジトリにコピーしてアプリ更新で配布
+- スタイル定義（色・幅・ハロ等）は [Rindo-web/HANDOFF_cycling-nav.md](https://github.com/osprey74/Rindo-web/blob/main/HANDOFF_cycling-nav.md) の「地図レイヤー表示仕様」を Swift に移植
 
 ### 2. リアルタイム走行情報（Phase iOS-3）
 
@@ -300,7 +329,7 @@ func calorieBurn(weight: Double, hours: Double, gradePercent: Double) -> Double 
 
 ## 認証フロー
 
-Rindo は個人利用・Tailnet 内限定運用の前提（AppStore 公開予定なし、不特定多数への公開予定なし）のため、マルチユーザー認証は採用しない。クライアントは「ログイン」ボタン一発で seeded 単一ユーザー（`users.id = 1`）のセッショントークンを取得し、以降の API 呼び出しに `Authorization: Bearer ...` で付加する。
+Rindo は個人利用・Tailnet 内限定運用の前提（AppStore 公開予定なし、不特定多数への公開予定なし、**Apple ID 認証も採用しない**）のため、マルチユーザー認証は不採用。クライアントは「ログイン」ボタン一発で seeded 単一ユーザー（`users.id = 1`）のセッショントークンを取得し、以降の API 呼び出しに `Authorization: Bearer ...` で付加する。リクエストボディは空でよい（rindo-api 側でユーザーは固定）。
 
 ```swift
 @Observable
@@ -308,10 +337,10 @@ class AuthService {
     private(set) var token: String?
 
     func login() async throws {
-        let body = try JSONSerialization.data(withJSONObject: [:])
         var req = URLRequest(url: URL(string: "\(AppConfig.apiBase)/api/auth/login")!)
         req.httpMethod = "POST"
-        req.httpBody = body
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = Data("{}".utf8)
         let (data, _) = try await URLSession.shared.data(for: req)
         let resp = try JSONDecoder().decode(LoginResponse.self, from: data)
         token = resp.token
@@ -319,18 +348,25 @@ class AuthService {
     }
 
     func logout() async {
-        // POST /api/auth/logout (best-effort)
+        // POST /api/auth/logout（best-effort、トークン無効化）
+        if let t = token {
+            var req = URLRequest(url: URL(string: "\(AppConfig.apiBase)/api/auth/logout")!)
+            req.httpMethod = "POST"
+            req.setValue("Bearer \(t)", forHTTPHeaderField: "Authorization")
+            _ = try? await URLSession.shared.data(for: req)
+        }
         token = nil
         try? Keychain.delete(key: "rindo.token")
     }
 
     struct LoginResponse: Decodable {
         let token: String
+        // user フィールドは現状捨てている。必要なら GET /api/auth/me で別途取得
     }
 }
 ```
 
-将来的に AppStore 公開や複数ユーザー対応をする場合は、Sign in with Apple または OAuth プロバイダを別途追加する。バックエンド（rindo-api）にはその際の拡張余地として `users.apple_user_id` カラムが残してある。
+`users.apple_user_id` カラムは rindo-api スキーマに残っているが、シードユーザーには `'local-user'` が固定値として入っているのみで、Apple 認証フローは実装されていない。将来方針が変わって AppStore 公開や複数ユーザー対応をする場合は、その時点で Sign in with Apple または OAuth プロバイダを別途追加する。
 
 ---
 
@@ -361,7 +397,7 @@ class AuthService {
 
 - Xcode プロジェクト作成（バンドル ID `com.osprey74.rindo`、SwiftUI、iOS 17.0）
 - MapLibre Native iOS を SPM で追加
-- 地図表示（OSM タイル）+ Layer 1/2/3 のサイクリングロード描画
+- 地図表示（OSM 標準タイル）+ Layer 1/2（バンドル GeoJSON）+ Layer 3（API 取得）の描画
 - 出典・ライセンス画面
 
 ### Phase iOS-2: 認証・ルート取り込み・地点表示
@@ -377,7 +413,8 @@ class AuthService {
 - 速度・距離・経過時間・勾配・標高・消費カロリー表示
 - バックグラウンド継続
 - SwiftData で走行ログ保存
-- GPX エクスポート + `POST /api/rides`
+- GPX エクスポート
+- **rindo-api に `rides` テーブル＋ `POST /api/rides` を新規実装**（マイグレーション `002_rides.sql` 追加）してから iOS 側のアップロード機能実装
 
 ### Phase iOS-4: ナビゲーション + 音声案内
 
@@ -408,10 +445,11 @@ class AuthService {
 ## 既知の課題・制約
 
 - HealthKit 利用には Apple Developer Program（$99/年）契約必須。HealthKit を諦めれば Personal Team でも開発可能（体重は手入力フォールバック）
-- AppStore 公開予定なし（個人利用・Tailnet 限定）。Sign in with Apple は実装しない
+- AppStore 公開予定なし（個人利用・Tailnet 限定）。**Sign in with Apple も実装しない**（個人利用なので不要）
 - MapLibre Native iOS のオフライン機能はベータ含む。動作検証必要
 - watchOS 連携は別ターゲット必要 + Watch 実機テスト推奨
-- 道央圏 PBF（Valhalla）は Mac mini @ 自宅で稼働。インターネット切断時のオフラインルーティングは未対応（将来検討）
+- 道央圏 PBF（Valhalla）は自宅 M2 Mac mini で稼働。インターネット切断時または Tailscale 圏外でのオフラインルーティングは未対応（将来検討）
+- iOS 側で `POST /api/rides`（走行ログアップロード）を呼ぶ前に、rindo-api 側で `rides` テーブル＋ハンドラを新規実装する必要がある
 
 ---
 

@@ -11,6 +11,12 @@
 - **バンドル ID**: `com.osprey74.rindo`
 - **最低 iOS バージョン**: iOS 17.0（推奨 iOS 18+）
 
+### 運用前提
+
+- **あくまで個人使用**。AppStore 公開・不特定多数公開の予定なし
+- **Web/バックエンドは自宅 M2 Mac mini で稼働**し、iPhone から **Tailscale ネットワーク経由**でアクセスする
+- **Apple ID 認証は採用しない**。シングルユーザー・セッショントークン方式（`POST /api/auth/login`）で十分
+
 設計の全体像・データソース・Web 版との役割分担は [HANDOFF_rindo-ios.md](./HANDOFF_rindo-ios.md) を参照してください。マスター仕様書は Web 版リポジトリの [HANDOFF_cycling-nav.md](https://github.com/osprey74/Rindo-web/blob/main/HANDOFF_cycling-nav.md) です。
 
 ## 主要機能（実装計画）
@@ -31,7 +37,10 @@
 - 走行モード切替（通勤 / レジャー / トレーニング）
 
 Web 版から取り込む機能（共通）:
-- ベースマップ + サイクリングロード表示（Layer 1/2/3）
+- ベースマップ（OSM 標準タイル）+ サイクリングロード表示
+  - Layer 1: OSM `highway=cycleway`（緑、バンドル GeoJSON）
+  - Layer 2: OSM `route=bicycle` リレーション（青、バンドル GeoJSON）
+  - Layer 3: 札幌市公式 13 路線 + 北海道大規模自転車道（オレンジ、`/api/cycling-roads` から取得）
 - ルート取り込み（Web で計画したルートをログイン同期）
 - 地点表示（自宅・職場・お気に入り）
 - 標高プロファイル（横向き全ルート確認）
@@ -48,9 +57,9 @@ Web 版から取り込む機能（共通）:
 - **モーション**: CoreMotion（転倒検知）
 - **ヘルス連携**: HealthKit（体重取得・ワークアウト記録）
 - **音声**: AVSpeechSynthesizer
-- **認証**: シングルユーザー・セッショントークン（`POST /api/auth/login` でトークン取得 → Keychain に保存）
+- **認証**: シングルユーザー・セッショントークン（`POST /api/auth/login` で seeded 単一ユーザーのトークン取得 → Keychain に保存。Apple ID 認証は不採用）
 - **API クライアント**: URLSession + Codable
-- **バックエンド**: [rindo-api](https://github.com/osprey74/rindo-api)（Bun + Hono + SQLite、Mac mini @ 自宅 + Tailscale 経由）
+- **バックエンド**: [rindo-api](https://github.com/osprey74/rindo-api)（Bun + Hono + SQLite、自宅 M2 Mac mini + Tailscale 経由）
 - **依存管理**: Swift Package Manager（SPM）
 
 ## アーキテクチャ
@@ -58,16 +67,16 @@ Web 版から取り込む機能（共通）:
 ```
 [ iPhone（走行中）]
    ↓ Tailscale 経由 https://home-mac-mini.taila6ea.ts.net
-[ M1 Mac mini @ 自宅 ]
+[ M2 Mac mini @ 自宅 ]
    ├─ Caddy（リバースプロキシ）
-   ├─ rindo-api（認証・ルート・地点・走行ログ）
-   └─ Valhalla（bicycle ルーティング）
+   ├─ rindo-api（認証・ルート・地点・cycling-roads・profile）
+   └─ Valhalla（bicycle ルーティング、Docker）
 ```
 
 - iPhone → Tailscale 経由で API アクセス（自宅 LAN 外でも到達可能）
-- ログイン: 「ログイン」ボタン → `POST /api/auth/login` で seeded 単一ユーザーのセッショントークン取得 → Keychain に保存（個人利用・Tailnet 内限定運用前提）
+- ログイン: 「ログイン」ボタン → `POST /api/auth/login` で seeded 単一ユーザーのセッショントークン取得 → Keychain に保存（個人利用・Tailnet 内限定運用前提・Apple ID 認証不採用）
 - ルート同期: Web で計画 → サーバ保存 → iOS が `GET /api/routes` で取り込み
-- 走行ログ: iOS で記録 → `POST /api/rides` でアップロード（将来 Web で履歴閲覧）
+- 走行ログ: iOS Phase 3 で実装予定。`POST /api/rides` は **rindo-api 未実装**。iOS Phase 3 着手時に rindo-api 側で `rides` テーブル＋ハンドラを新規実装する
 
 ## 開発環境セットアップ
 
@@ -75,7 +84,7 @@ Web 版から取り込む機能（共通）:
 
 - macOS 14（Sonoma）以降
 - Xcode 16+
-- Apple Developer Program（HealthKit 利用に必須。AppStore 公開予定なし、Sign in with Apple は使わないので、HealthKit を諦めれば Personal Team でもデバッグ可能）
+- Apple Developer Program（HealthKit 利用に必須。AppStore 公開予定なし、Apple ID 認証も不採用なので、HealthKit を諦めれば Personal Team でもデバッグ可能）
 - 実機テスト用 iPhone（iOS 17+）
 - Tailscale クライアント（Mac mini と iPhone 双方）
 
@@ -124,9 +133,9 @@ Info.plist 追加項目:
 
 | Phase | 内容 |
 |---|---|
-| iOS-1 | プロジェクト初期化・地図表示（MapLibre + サイクリングロード Layer 1/2/3） |
-| iOS-2 | 認証・ルート取り込み・地点表示 |
-| iOS-3 | リアルタイム走行情報・GPS ログ記録 |
+| iOS-1 | プロジェクト初期化・地図表示（MapLibre + Layer 1/2 バンドル GeoJSON + Layer 3 API 取得） |
+| iOS-2 | 認証（`POST /api/auth/login`）・ルート取り込み・地点表示 |
+| iOS-3 | リアルタイム走行情報・GPS ログ記録（`POST /api/rides` を rindo-api に新規実装した上で連携） |
 | iOS-4 | ナビゲーション（詳細・簡易）+ 音声案内 |
 | iOS-5 | オフラインマップ・走行モード・リマインダー |
 | iOS-6 | Apple Watch 連携 |
