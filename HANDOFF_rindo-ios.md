@@ -79,7 +79,7 @@ Rindo/
 │   │   ├── Map/
 │   │   │   ├── MapScreen.swift       // メイン地図画面
 │   │   │   ├── MapView.swift         // MapLibre UIViewRepresentable
-│   │   │   └── MapLayers.swift       // Layer 1/2/3 のスタイル定義
+│   │   │   └── MapLayers.swift       // 地図スタイル定義（サイクリングロードレイヤーは削除済み）
 │   │   ├── Navigation/
 │   │   │   ├── NavigationView.swift  // 詳細ナビ画面
 │   │   │   ├── SimpleNavView.swift   // 簡易ナビ（省電力）
@@ -163,9 +163,9 @@ rindo-api 直接ハンドリング:
 # 公開（認証不要）
 POST /api/auth/login                  → { token, user }   seeded 単一ユーザーのセッション発行
 POST /api/auth/logout                 → { ok: true }      best-effort
-GET  /api/cycling-roads               → Layer 3（GeoJSON FeatureCollection）
-                                        properties.large_scale=true は北海道大規模自転車道（CC-BY）
-                                        properties.large_scale=false は札幌市公式 13 サイクリングロード
+GET  /api/cycling-roads               → サイクリングロード（GeoJSON FeatureCollection、Web 専用表示。16 路線）
+                                        properties.large_scale=1 は北海道大規模自転車道（CC-BY）
+                                        properties.large_scale=0 は札幌市サイクリングロード
 GET  /api/cycling-roads/:id           → GeoJSON Feature
 POST /api/cycling-roads               → 新規作成（Tailnet 限定運用のため認証なし）
 PUT  /api/cycling-roads/:id           → 更新（同上）
@@ -186,7 +186,7 @@ GET  /api/profile                     → Profile（体重等のユーザー設�
 PUT  /api/profile                     → Profile
 ```
 
-iOS は基本的に Layer 3 を `GET /api/cycling-roads` で読み取るのみで、CRUD 系（POST/PUT/DELETE）は Web の管理 UI から操作する想定。`/api/cycling-roads` の書き込み系がパブリックなのは、Rindo が **所有者一人による占有使用・Tailnet 限定運用前提**で認証・セキュリティを最低限のみ実装している設計選択（[rindo-api/src/index.ts](https://github.com/osprey74/rindo-api/blob/main/src/index.ts) 参照）。
+iOS はサイクリングロードオーバーレイを表示しない設計のため、`/api/cycling-roads` は呼び出さない。CRUD 系は Web の管理 UI から操作する。`/api/cycling-roads` の書き込み系がパブリックなのは、Rindo が **所有者一人による占有使用・Tailnet 限定運用前提**で認証・セキュリティを最低限のみ実装している設計選択（[rindo-api/src/index.ts](https://github.com/osprey74/rindo-api/blob/main/src/index.ts) 参照）。
 
 Caddy 経由のリバースプロキシ（rindo-api を経由しない外部サービス）:
 
@@ -197,13 +197,15 @@ GET  /api/overpass?...                                              → コン�
 GET  /api/weather/:areaCode                                         → JMA 天気予報
 ```
 
-将来追加予定（**現時点では rindo-api 未実装**）:
+走行ログ（rindo-api 実装済み、`migrations/004_rides.sql`）:
 
 ```
-POST /api/rides   { gpx, summary } → 走行ログアップロード（iOS 専用）
+GET  /api/rides                           → 走行ログ一覧（トラックデータなし）
+GET  /api/rides/:id                       → 走行ログ詳細（GPSトラック付き）
+POST /api/rides   { name?, started_at, ended_at, distance_km, duration_min, ascent_m?, descent_m?, max_speed_kmh?, avg_speed_kmh?, calories_kcal?, track }
+                                          → 走行ログ作成（iOS からのアップロード）
+DELETE /api/rides/:id                     → 走行ログ削除
 ```
-
-→ iOS Phase 3（GPS ログ記録）着手時に rindo-api 側で `rides` テーブル＋ハンドラを新規実装する必要がある。スキーマは [rindo-api/migrations/](https://github.com/osprey74/rindo-api/tree/main/migrations) に新規マイグレーション（`002_rides.sql`）として追加する想定。
 
 ### Codable モデル例
 
@@ -242,12 +244,10 @@ struct SavedLocation: Codable, Identifiable {
 ### 1. 地図表示（Phase iOS-1）
 
 - MapLibre Native iOS で OSM 標準タイル（`https://tile.openstreetmap.org/{z}/{x}/{y}.png`、max zoom 19）を表示
-- レイヤー構成は Web 実装（[Rindo-web/src/components/MapView.tsx](https://github.com/osprey74/Rindo-web/blob/main/src/components/MapView.tsx) の `setupLayers`）と同じ。色・幅は Web 版完全一致
-  - **Layer 1**: OSM `highway=cycleway`（緑、線幅 3）。Web 版と同じ `sapporo-osm-cycleways.geojson` をアプリリソースに**バンドル**して `MLNShapeSource` に投入
-  - **Layer 2**: OSM `route=bicycle` リレーション（青、線幅 4）。Web 版と同じ `dosou-osm-bicycle-routes.geojson` をバンドル
-  - **Layer 3**: 起動時に `GET /api/cycling-roads` で取得 → `MLNShapeSource` に投入。`properties.road_type` で実線/破線を分岐、`properties.large_scale` は出典表示の判別用
-- Layer 1/2 は **個人使用前提でユーザーが変更不可な固定コンテンツのため、ランタイムで Overpass を叩かずバンドル GeoJSON を採用**。データ更新は Web 側のスクリプト（`scripts/fetch-osm-*.ts`）を実行 → 生成された GeoJSON を iOS リポジトリにコピーしてアプリ更新で配布
-- スタイル定義（色・幅・ハロ等）は [Rindo-web/HANDOFF_cycling-nav.md](https://github.com/osprey74/Rindo-web/blob/main/HANDOFF_cycling-nav.md) の「地図レイヤー表示仕様」を Swift に移植
+- **サイクリングロードオーバーレイなし** — iOS はベースマップ＋保存済みルート（ナビゲーション用）のみ表示する設計
+  - Layer 1（OSM `highway=cycleway`）、Layer 2（OSM `route=bicycle`）、Layer 3（キュレーション済みサイクリングロード）はすべて iOS から削除済み（2026-05）
+  - サイクリングロードの閲覧・管理は Web 版専用機能
+- バンドル GeoJSON ファイル（`sapporo-osm-cycleways.geojson`、`dosou-osm-bicycle-routes.geojson`）も iOS リポジトリから削除済み
 
 ### 2. リアルタイム走行情報（Phase iOS-3）
 
@@ -398,37 +398,37 @@ class AuthService {
 
 詳細チェックリストは [docs/tasks.md](./docs/tasks.md) を参照。
 
-### Phase iOS-1: プロジェクト初期化と地図表示
+### Phase iOS-1: プロジェクト初期化と地図表示 ✅
 
 - Xcode プロジェクト作成（バンドル ID `com.osprey74.rindo`、SwiftUI、iOS 17.0）
 - MapLibre Native iOS を SPM で追加
-- 地図表示（OSM 標準タイル）+ Layer 1/2（バンドル GeoJSON）+ Layer 3（API 取得）の描画
+- 地図表示（OSM 標準タイル、ベースマップのみ。サイクリングロードオーバーレイなし）
 - 出典・ライセンス画面
 
-### Phase iOS-2: 認証・ルート取り込み・地点表示
+### Phase iOS-2: 認証・ルート取り込み・地点表示 ✅
 
 - 「ログイン」ボタン → `POST /api/auth/login` 実装
 - Keychain によるセッショントークン管理
 - `GET /api/routes` 一覧画面 → タップで地図に表示
 - 地点（自宅・職場・お気に入り）一覧と地図上アイコン表示
 
-### Phase iOS-3: リアルタイム走行情報・GPS ログ記録
+### Phase iOS-3: リアルタイム走行情報・GPS ログ記録 ✅
 
 - `LocationProvider` + `RideRecorder`
 - 速度・距離・経過時間・勾配・標高・消費カロリー表示
 - バックグラウンド継続
 - SwiftData で走行ログ保存
 - GPX エクスポート
-- **rindo-api に `rides` テーブル＋ `POST /api/rides` を新規実装**（マイグレーション `002_rides.sql` 追加）してから iOS 側のアップロード機能実装
+- `POST /api/rides` で走行ログをサーバアップロード（rindo-api 実装済み、`migrations/004_rides.sql`）
 
-### Phase iOS-4: ナビゲーション + 音声案内
+### Phase iOS-4: ナビゲーション + 音声案内 ✅
 
 - Valhalla `/route` のマニューバ解釈
 - 詳細ナビ（地図 + 次分岐距離）+ 簡易ナビ（矢印のみ）
 - 音声案内（AVSpeechSynthesizer）
 - ルート逸脱検出 + 自動再ルート
 
-### Phase iOS-5: オフラインマップ・走行モード・リマインダー
+### Phase iOS-5: オフラインマップ・走行モード・リマインダー ✅
 
 - `MLNOfflineStorage` 事前ダウンロード
 - 走行モード（通勤 / レジャー / トレーニング）切替
@@ -454,7 +454,7 @@ class AuthService {
 - MapLibre Native iOS のオフライン機能はベータ含む。動作検証必要
 - watchOS 連携は別ターゲット必要 + Watch 実機テスト推奨
 - 道央圏 PBF（Valhalla）は自宅 M2 Mac mini で稼働。インターネット切断時または Tailscale 圏外でのオフラインルーティングは未対応（将来検討）
-- iOS 側で `POST /api/rides`（走行ログアップロード）を呼ぶ前に、rindo-api 側で `rides` テーブル＋ハンドラを新規実装する必要がある
+- ~~rindo-api 側で `rides` テーブル＋ハンドラを新規実装する必要がある~~ → 実装済み（`migrations/004_rides.sql`、`handlers/rides.ts`）
 
 ---
 

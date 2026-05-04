@@ -5,8 +5,8 @@
 
 ## 進捗サマリー
 
-- 現在のフェーズ: **Phase iOS-5 着手前**（Phase iOS-1〜4 完了）
-- 残課題: 大規模自転車道（large_scale）の強調表示は iOS-1 では見送り、必要に応じて後続フェーズで対応
+- 現在のフェーズ: **Phase iOS-6 着手前**（Phase iOS-1〜5 完了）
+- Layer 1/2/3 は iOS から削除済み（2026-05）。サイクリングロード表示は Web 専用
 - 残課題: 地点タップでポップオーバー表示（Phase iOS-2 の軽微な残り、必要に応じて後続で対応）
 
 ## フェーズ別ステータス
@@ -17,7 +17,7 @@
 | iOS-2 | 認証・ルート取り込み・地点表示 | ✅ 完了 |
 | iOS-3 | リアルタイム走行情報・GPS ログ記録 | ✅ 完了 |
 | iOS-4 | ナビゲーション + 音声案内 | ✅ 完了 |
-| iOS-5 | オフラインマップ・走行モード・リマインダー | 未着手 |
+| iOS-5 | オフラインマップ・走行モード・リマインダー | ✅ 完了 |
 | iOS-6 | Apple Watch 連携 | 未着手 |
 | iOS-7 | 安全機能・写真スポット | 未着手 |
 
@@ -53,18 +53,15 @@
 - [x] 現在地表示（`mapView.showsUserLocation = true`）
 - [x] ピンチ回転を無効化（北固定）
 
-### サイクリングロード描画
+### サイクリングロード描画 — 削除済み（2026-05）
+
+> Layer 1（OSM cycleway）、Layer 2（OSM bicycle routes）、Layer 3（キュレーション済みサイクリングロード）はすべて iOS から削除。サイクリングロードの表示は Web 版専用機能に変更。iOS はベースマップ＋保存済みルート（ナビゲーション用）に特化。
 
 - [x] `APIClient` 雛形（actor ベース、URLSession ラッパ）
-- [x] `GET /api/cycling-roads` で Layer 3 取得
-- [x] Layer 1（OSM cycleway）— バンドル済み GeoJSON（`sapporo-osm-cycleways.geojson`）から表示。Overpass API 経由は採用せず（実装簡素化・オフライン対応のためバンドル方式）
-- [x] Layer 2（OSM bicycle routes）— バンドル済み GeoJSON（`dosou-osm-bicycle-routes.geojson`）から表示
-- [x] MLNShapeSource + MLNLineStyleLayer で描画（`MapLayerStyle.swift` で Web 版と同一の色・幅・破線パターンを定義）
-  - [x] Layer 1（緑 #1D9E75、幅 3、不透明度 0.85）
-  - [x] Layer 2（青 #3C7B91、幅 4、不透明度 0.9）
-  - [x] Layer 3 専用（オレンジ #E65C00 実線、幅 4、`road_type == 'exclusive'`）
-  - [x] Layer 3 共用（オレンジ #E65C00 破線 [4,2]、幅 2、`road_type == 'shared'`）
-  - [ ] 大規模自転車道フラグ（large_scale）の強調表示（後続フェーズに送り）
+- ~~`GET /api/cycling-roads` で Layer 3 取得~~ — 削除済み
+- ~~Layer 1（OSM cycleway）バンドル GeoJSON~~ — 削除済み
+- ~~Layer 2（OSM bicycle routes）バンドル GeoJSON~~ — 削除済み
+- ~~Layer 3 描画（MLNShapeSource + MLNLineStyleLayer）~~ — 削除済み
 
 ### 出典・ライセンス画面
 
@@ -255,24 +252,24 @@
 
 ---
 
-## Phase iOS-5: オフラインマップ・走行モード・リマインダー
+## Phase iOS-5: オフラインマップ・走行モード・リマインダー ✅
 
 ### オフラインマップ
 
-- [ ] MLNOfflineStorage で範囲指定ダウンロード UI
-- [ ] プリセット: 「自宅から 30km」「お気に入りルート周辺 10km」
-- [ ] ストレージ容量管理画面（合計サイズ表示・個別削除）
+- [x] MLNOfflineStorage で範囲指定ダウンロード UI
+- [x] プリセット: 「自宅から 30km」「お気に入りルート周辺 10km」
+- [x] ストレージ容量管理画面（合計サイズ表示・個別削除）
 
 ### 走行モード
 
-- [ ] モード切替（通勤 / レジャー / トレーニング）
-- [ ] モード別設定: 音声頻度・地図ズーム初期値・通知の有無
+- [x] モード切替（通勤 / レジャー / トレーニング）
+- [x] モード別設定: 音声頻度・地図ズーム初期値・通知の有無
 
 ### リマインダー
 
-- [ ] 休憩リマインダー（30 分・60 分・90 分から選択）
-- [ ] 補給リマインダー（時間または距離トリガ）
-- [ ] 通知センターと音声両方で通知
+- [x] 休憩リマインダー（30 分・60 分・90 分から選択）
+- [x] 補給リマインダー（時間または距離トリガ）
+- [x] 通知センターと音声両方で通知
 
 ### 動作確認
 
@@ -338,7 +335,7 @@
 
 ## 接続周りの先行整備（並行で進めて良い）
 
-- [ ] rindo-api の `POST /api/rides` エンドポイント設計確定（GPX or JSON track points）
+- [x] rindo-api の `POST /api/rides` エンドポイント設計確定・実装済み（JSON track points、`migrations/004_rides.sql`）
 - [ ] HealthKit 用 Capability 申請（Apple Developer Program 契約時のみ）
 - [ ] iOS から Tailscale 経由 `https://home-mac-mini.taila6ea.ts.net/api/auth/login` 疎通確認
 
