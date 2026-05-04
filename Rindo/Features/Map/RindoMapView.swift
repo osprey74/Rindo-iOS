@@ -221,6 +221,8 @@ struct RindoMapView: UIViewRepresentable {
             guard let shape = try? MLNShape(data: data, encoding: String.Encoding.utf8.rawValue) else { return }
             let source = MLNShapeSource(identifier: id, shape: shape, options: [
                 .simplificationTolerance: 0,
+                .maximumZoomLevel: 20,
+                .buffer: 512,
             ])
             style.addSource(source)
             // 札幌市公式（large_scale が false または未設定）— オレンジ
