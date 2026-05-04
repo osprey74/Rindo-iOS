@@ -219,7 +219,9 @@ struct RindoMapView: UIViewRepresentable {
             let id = MapLayerStyle.CuratedRoads.sourceID
             guard let data = pendingCyclingRoads, !addedSources.contains(id) else { return }
             guard let shape = try? MLNShape(data: data, encoding: String.Encoding.utf8.rawValue) else { return }
-            let source = MLNShapeSource(identifier: id, shape: shape)
+            let source = MLNShapeSource(identifier: id, shape: shape, options: [
+                .simplificationTolerance: 0,
+            ])
             style.addSource(source)
             // 札幌市公式（large_scale != 1）— オレンジ
             let exclusive = MLNLineStyleLayer(identifier: MapLayerStyle.CuratedRoads.exclusiveLayerID, source: source)

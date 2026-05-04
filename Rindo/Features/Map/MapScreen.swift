@@ -566,8 +566,8 @@ struct MapScreen: View {
 
     private func loadAllLayers() async {
         loadBundledLayers()
+        await loadCyclingRoads()
         if auth.isAuthenticated {
-            await loadCyclingRoads()
             await loadLocations()
         }
     }
