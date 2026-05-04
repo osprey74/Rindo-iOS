@@ -39,7 +39,6 @@
 		ADD9F697F09A8E082236B323 /* ArrowImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFE64A0AA9246E333D8E57F1 /* ArrowImage.swift */; };
 		AFEF81B0A57DB796124B17F7 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0FDB08B25A72EF5BE3C18E /* APIClient.swift */; };
 		B2083FDE2480A053FAFBAE4E /* NavigationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0F0FB41D11F02841C7AC55 /* NavigationManager.swift */; };
-		BEE3A84481B94D4E220B4FD9 /* dosou-osm-bicycle-routes.geojson in Resources */ = {isa = PBXBuildFile; fileRef = 73F70DFF2ABBCE10C755F10A /* dosou-osm-bicycle-routes.geojson */; };
 		CC22BC1146737844C82C69E9 /* RindoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F29A6D8ADCA017F35CAD45 /* RindoApp.swift */; };
 		CDB46ACBD872C80BD68686AF /* RindoMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71577F24BBF2F35D16CD3844 /* RindoMapView.swift */; };
 		D073F1DDDBE435367813CB22 /* ValhallaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F72064002F7AE128E36BEAAB /* ValhallaService.swift */; };
@@ -47,7 +46,6 @@
 		DB9321C37D5A648B88DC9FAE /* ImportedRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32B76B8124466E1A7074EBFB /* ImportedRoute.swift */; };
 		E65D48F07CB4F0B6B901ECC2 /* RideLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD7543B6BE250549AAFD1264 /* RideLog.swift */; };
 		E92862C8C533F54008FDD2C7 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B1A15858FEB15AE9006E214 /* LocationService.swift */; };
-		FA34360B6E829D4B487E100B /* sapporo-osm-cycleways.geojson in Resources */ = {isa = PBXBuildFile; fileRef = CF5DB96DA00E28EF8F1EB3E7 /* sapporo-osm-cycleways.geojson */; };
 		FE4B30385D2224ABC06F6183 /* RindoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFA4C4B0A1E7087270345C93 /* RindoTests.swift */; };
 		D388C6963D6842D055E19A7C /* RideMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90EA114D92EC41C4CCD41C8D /* RideMode.swift */; };
 		C9885FB26B4D88ED60DC7E7A /* ReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9262E3CECA0FF0129BB20DE0 /* ReminderManager.swift */; };
@@ -82,7 +80,6 @@
 		60006A75E9877B3A1585AA22 /* AttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionView.swift; sourceTree = "<group>"; };
 		70C8241C9BB2BCA598AD68F8 /* SimpleNavView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleNavView.swift; sourceTree = "<group>"; };
 		71577F24BBF2F35D16CD3844 /* RindoMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RindoMapView.swift; sourceTree = "<group>"; };
-		73F70DFF2ABBCE10C755F10A /* dosou-osm-bicycle-routes.geojson */ = {isa = PBXFileReference; path = "dosou-osm-bicycle-routes.geojson"; sourceTree = "<group>"; };
 		7A0FDB08B25A72EF5BE3C18E /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		8124F62BA1F39CA06E0856F3 /* ElevationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationService.swift; sourceTree = "<group>"; };
 		83F5632A7C3A3B68BA158CB5 /* RideHistoryPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideHistoryPanel.swift; sourceTree = "<group>"; };
@@ -100,7 +97,6 @@
 		BB0626BA985CE2903E3E0D20 /* Rindo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Rindo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CAFCE5B4E6062940B8E720D2 /* TurnByTurnPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnByTurnPanel.swift; sourceTree = "<group>"; };
 		CE26C14188683CAC54851BE2 /* ElevationChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationChart.swift; sourceTree = "<group>"; };
-		CF5DB96DA00E28EF8F1EB3E7 /* sapporo-osm-cycleways.geojson */ = {isa = PBXFileReference; path = "sapporo-osm-cycleways.geojson"; sourceTree = "<group>"; };
 		E6B2DE7731FF35FF14D423B4 /* GPXParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXParser.swift; sourceTree = "<group>"; };
 		E95BD14DF26654CDD9E622B9 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		EDC2258D014E2B1876445AA2 /* SavedLocationsPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedLocationsPanel.swift; sourceTree = "<group>"; };
@@ -250,11 +246,9 @@
 			isa = PBXGroup;
 			children = (
 				97B17A2B33EC7219FA969766 /* Assets.xcassets */,
-				73F70DFF2ABBCE10C755F10A /* dosou-osm-bicycle-routes.geojson */,
 				4426995F5955659EEDDC9674 /* Info.plist */,
 				A4A3C05795184CB478A6CD35 /* osm-style.json */,
 				99E7B4EAED30E58C7A604C26 /* Rindo.entitlements */,
-				CF5DB96DA00E28EF8F1EB3E7 /* sapporo-osm-cycleways.geojson */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -461,9 +455,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				31AD503AC2F54A3C374F1C21 /* Assets.xcassets in Resources */,
-				BEE3A84481B94D4E220B4FD9 /* dosou-osm-bicycle-routes.geojson in Resources */,
 				0CEDEEA9761BE5013013E191 /* osm-style.json in Resources */,
-				FA34360B6E829D4B487E100B /* sapporo-osm-cycleways.geojson in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

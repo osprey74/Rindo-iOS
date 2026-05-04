@@ -3,10 +3,6 @@ import MapLibre
 import SwiftUI
 
 struct RindoMapView: UIViewRepresentable {
-    // Layer データ
-    var cyclingRoadsData: Data?
-    var osmCyclewaysData: Data?
-    var bicycleRoutesData: Data?
     var selectedRoute: SavedRoute?
     var savedLocations: [SavedLocation]
     var focusCoordinate: CLLocationCoordinate2D?
@@ -50,9 +46,6 @@ struct RindoMapView: UIViewRepresentable {
     func updateUIView(_ mapView: MLNMapView, context: Context) {
         context.coordinator.update(
             mapView: mapView,
-            cyclingRoads: cyclingRoadsData,
-            osmCycleways: osmCyclewaysData,
-            bicycleRoutes: bicycleRoutesData,
             selectedRoute: selectedRoute,
             savedLocations: savedLocations,
             navigationCoordinates: navigationCoordinates,
@@ -86,10 +79,6 @@ struct RindoMapView: UIViewRepresentable {
         private var styleLoaded = false
         private var addedSources: Set<String> = []
 
-        // 保持データ
-        private var pendingCyclingRoads: Data?
-        private var pendingOSMCycleways: Data?
-        private var pendingBicycleRoutes: Data?
         private var currentRoute: SavedRoute?
         private var currentLocations: [SavedLocation] = []
         private var navCoordinates: [CLLocationCoordinate2D] = []
@@ -100,9 +89,6 @@ struct RindoMapView: UIViewRepresentable {
 
         func update(
             mapView: MLNMapView,
-            cyclingRoads: Data?,
-            osmCycleways: Data?,
-            bicycleRoutes: Data?,
             selectedRoute: SavedRoute?,
             savedLocations: [SavedLocation],
             navigationCoordinates: [CLLocationCoordinate2D],
@@ -111,9 +97,6 @@ struct RindoMapView: UIViewRepresentable {
             isNavigating: Bool,
             recordedTrack: [RideRecorder.RecordedTrackPoint]
         ) {
-            pendingCyclingRoads = cyclingRoads
-            pendingOSMCycleways = osmCycleways
-            pendingBicycleRoutes = bicycleRoutes
             currentRoute = selectedRoute
             currentLocations = savedLocations
             navCoordinates = navigationCoordinates
@@ -172,98 +155,10 @@ struct RindoMapView: UIViewRepresentable {
 
         private func applyAllLayers(to mapView: MLNMapView) {
             guard let style = mapView.style else { return }
-            applyLayer1(style: style)
-            applyLayer2(style: style)
-            applyLayer3(style: style)
             applyRouteLayer(style: style, mapView: mapView)
             applyLocationMarkers(style: style)
             applyTrackLayer(style: style)
             applyNavigationLayers(style: style)
-        }
-
-        // MARK: - Layer 1/2/3 (unchanged)
-
-        private func applyLayer1(style: MLNStyle) {
-            let id = MapLayerStyle.OSMCycleways.sourceID
-            guard let data = pendingOSMCycleways, !addedSources.contains(id) else { return }
-            guard let shape = try? MLNShape(data: data, encoding: String.Encoding.utf8.rawValue) else { return }
-            let source = MLNShapeSource(identifier: id, shape: shape)
-            style.addSource(source)
-            let layer = MLNLineStyleLayer(identifier: MapLayerStyle.OSMCycleways.layerID, source: source)
-            layer.lineColor = NSExpression(forConstantValue: MapLayerStyle.OSMCycleways.color)
-            layer.lineWidth = NSExpression(forConstantValue: NSNumber(value: Float(MapLayerStyle.OSMCycleways.width)))
-            layer.lineOpacity = NSExpression(forConstantValue: NSNumber(value: MapLayerStyle.OSMCycleways.opacity))
-            layer.lineJoin = NSExpression(forConstantValue: "round")
-            layer.lineCap = NSExpression(forConstantValue: "round")
-            style.addLayer(layer)
-            addedSources.insert(id)
-        }
-
-        private func applyLayer2(style: MLNStyle) {
-            let id = MapLayerStyle.BicycleRoutes.sourceID
-            guard let data = pendingBicycleRoutes, !addedSources.contains(id) else { return }
-            guard let shape = try? MLNShape(data: data, encoding: String.Encoding.utf8.rawValue) else { return }
-            let source = MLNShapeSource(identifier: id, shape: shape)
-            style.addSource(source)
-            let layer = MLNLineStyleLayer(identifier: MapLayerStyle.BicycleRoutes.layerID, source: source)
-            layer.lineColor = NSExpression(forConstantValue: MapLayerStyle.BicycleRoutes.color)
-            layer.lineWidth = NSExpression(forConstantValue: NSNumber(value: Float(MapLayerStyle.BicycleRoutes.width)))
-            layer.lineOpacity = NSExpression(forConstantValue: NSNumber(value: MapLayerStyle.BicycleRoutes.opacity))
-            layer.lineJoin = NSExpression(forConstantValue: "round")
-            layer.lineCap = NSExpression(forConstantValue: "round")
-            style.addLayer(layer)
-            addedSources.insert(id)
-        }
-
-        private func applyLayer3(style: MLNStyle) {
-            let id = MapLayerStyle.CuratedRoads.sourceID
-            guard let data = pendingCyclingRoads, !addedSources.contains(id) else { return }
-            guard let shape = try? MLNShape(data: data, encoding: String.Encoding.utf8.rawValue) else { return }
-            let source = MLNShapeSource(identifier: id, shape: shape, options: [
-                .simplificationTolerance: 0,
-                .maximumZoomLevel: 20,
-                .buffer: 512,
-            ])
-            style.addSource(source)
-            // 札幌市公式（large_scale が false または未設定）— オレンジ
-            let exclusive = MLNLineStyleLayer(identifier: MapLayerStyle.CuratedRoads.exclusiveLayerID, source: source)
-            exclusive.predicate = NSPredicate(format: "road_type == 'exclusive' AND (large_scale == NO OR large_scale == NIL)")
-            exclusive.lineColor = NSExpression(forConstantValue: MapLayerStyle.CuratedRoads.color)
-            exclusive.lineWidth = NSExpression(forConstantValue: NSNumber(value: Float(MapLayerStyle.CuratedRoads.exclusiveWidth)))
-            exclusive.lineJoin = NSExpression(forConstantValue: "round")
-            exclusive.lineCap = NSExpression(forConstantValue: "round")
-            style.addLayer(exclusive)
-
-            let shared = MLNLineStyleLayer(identifier: MapLayerStyle.CuratedRoads.sharedLayerID, source: source)
-            shared.predicate = NSPredicate(format: "road_type == 'shared' AND (large_scale == NO OR large_scale == NIL)")
-            shared.lineColor = NSExpression(forConstantValue: MapLayerStyle.CuratedRoads.color)
-            shared.lineWidth = NSExpression(forConstantValue: NSNumber(value: Float(MapLayerStyle.CuratedRoads.sharedWidth)))
-            shared.lineDashPattern = NSExpression(forConstantValue: MapLayerStyle.CuratedRoads.sharedDashPattern)
-            shared.lineJoin = NSExpression(forConstantValue: "round")
-            shared.lineCap = NSExpression(forConstantValue: "round")
-            style.addLayer(shared)
-
-            // 北海道大規模自転車道（large_scale == true）— 青紫、太め
-            let largeScale = MLNLineStyleLayer(identifier: MapLayerStyle.CuratedRoads.largeScaleLayerID, source: source)
-            largeScale.predicate = NSPredicate(format: "large_scale == YES")
-            largeScale.lineColor = NSExpression(forConstantValue: MapLayerStyle.CuratedRoads.largeScaleColor)
-            largeScale.lineWidth = NSExpression(forConstantValue: NSNumber(value: Float(MapLayerStyle.CuratedRoads.largeScaleWidth)))
-            largeScale.lineJoin = NSExpression(forConstantValue: "round")
-            largeScale.lineCap = NSExpression(forConstantValue: "round")
-            style.addLayer(largeScale)
-
-            // 路線名ラベル（Web版と同じ minzoom 10、symbol-spacing 320）
-            let label = MLNSymbolStyleLayer(identifier: MapLayerStyle.CuratedRoads.labelLayerID, source: source)
-            label.text = NSExpression(forKeyPath: "name")
-            label.textColor = NSExpression(forConstantValue: UIColor(red: 0x5C/255, green: 0x2C/255, blue: 0x00/255, alpha: 1))
-            label.textHaloColor = NSExpression(forConstantValue: UIColor(white: 1, alpha: 0.95))
-            label.textHaloWidth = NSExpression(forConstantValue: NSNumber(value: 1.5))
-            label.symbolPlacement = NSExpression(forConstantValue: "line")
-            label.symbolSpacing = NSExpression(forConstantValue: NSNumber(value: 320))
-            label.textFontSize = NSExpression(forConstantValue: NSNumber(value: 11))
-            style.addLayer(label)
-
-            addedSources.insert(id)
         }
 
         // MARK: - Selected Route (server)

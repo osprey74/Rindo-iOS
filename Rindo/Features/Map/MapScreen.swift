@@ -6,11 +6,6 @@ struct MapScreen: View {
     @Environment(AuthService.self) private var auth
     @Environment(\.modelContext) private var modelContext
 
-    // レイヤーデータ
-    @State private var cyclingRoadsData: Data?
-    @State private var osmCyclewaysData: Data?
-    @State private var bicycleRoutesData: Data?
-
     // サーバ連携ルート・地点
     @State private var selectedRoute: SavedRoute?
     @State private var savedLocations: [SavedLocation] = []
@@ -62,9 +57,6 @@ struct MapScreen: View {
         ZStack(alignment: .bottom) {
             // 地図
             RindoMapView(
-                cyclingRoadsData: cyclingRoadsData,
-                osmCyclewaysData: osmCyclewaysData,
-                bicycleRoutesData: bicycleRoutesData,
                 selectedRoute: selectedRoute,
                 savedLocations: savedLocations,
                 focusCoordinate: focusCoordinate,
@@ -565,28 +557,9 @@ struct MapScreen: View {
     // MARK: - Data Loading
 
     private func loadAllLayers() async {
-        loadBundledLayers()
-        await loadCyclingRoads()
         if auth.isAuthenticated {
             await loadLocations()
         }
-    }
-
-    private func loadBundledLayers() {
-        if let url = Bundle.main.url(forResource: "sapporo-osm-cycleways", withExtension: "geojson"),
-           let data = try? Data(contentsOf: url) {
-            osmCyclewaysData = data
-        }
-        if let url = Bundle.main.url(forResource: "dosou-osm-bicycle-routes", withExtension: "geojson"),
-           let data = try? Data(contentsOf: url) {
-            bicycleRoutesData = data
-        }
-    }
-
-    private func loadCyclingRoads() async {
-        do {
-            cyclingRoadsData = try await APIClient.shared.fetchData(path: "/api/cycling-roads")
-        } catch {}
     }
 
     private func loadLocations() async {
