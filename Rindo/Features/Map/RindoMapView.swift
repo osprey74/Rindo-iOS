@@ -223,9 +223,9 @@ struct RindoMapView: UIViewRepresentable {
                 .simplificationTolerance: 0,
             ])
             style.addSource(source)
-            // 札幌市公式（large_scale != 1）— オレンジ
+            // 札幌市公式（large_scale が false または未設定）— オレンジ
             let exclusive = MLNLineStyleLayer(identifier: MapLayerStyle.CuratedRoads.exclusiveLayerID, source: source)
-            exclusive.predicate = NSPredicate(format: "road_type == 'exclusive' AND large_scale != 1")
+            exclusive.predicate = NSPredicate(format: "road_type == 'exclusive' AND (large_scale == NO OR large_scale == NIL)")
             exclusive.lineColor = NSExpression(forConstantValue: MapLayerStyle.CuratedRoads.color)
             exclusive.lineWidth = NSExpression(forConstantValue: NSNumber(value: Float(MapLayerStyle.CuratedRoads.exclusiveWidth)))
             exclusive.lineJoin = NSExpression(forConstantValue: "round")
@@ -233,7 +233,7 @@ struct RindoMapView: UIViewRepresentable {
             style.addLayer(exclusive)
 
             let shared = MLNLineStyleLayer(identifier: MapLayerStyle.CuratedRoads.sharedLayerID, source: source)
-            shared.predicate = NSPredicate(format: "road_type == 'shared' AND large_scale != 1")
+            shared.predicate = NSPredicate(format: "road_type == 'shared' AND (large_scale == NO OR large_scale == NIL)")
             shared.lineColor = NSExpression(forConstantValue: MapLayerStyle.CuratedRoads.color)
             shared.lineWidth = NSExpression(forConstantValue: NSNumber(value: Float(MapLayerStyle.CuratedRoads.sharedWidth)))
             shared.lineDashPattern = NSExpression(forConstantValue: MapLayerStyle.CuratedRoads.sharedDashPattern)
@@ -241,9 +241,9 @@ struct RindoMapView: UIViewRepresentable {
             shared.lineCap = NSExpression(forConstantValue: "round")
             style.addLayer(shared)
 
-            // 北海道大規模自転車道（large_scale == 1）— 青紫、太め
+            // 北海道大規模自転車道（large_scale == true）— 青紫、太め
             let largeScale = MLNLineStyleLayer(identifier: MapLayerStyle.CuratedRoads.largeScaleLayerID, source: source)
-            largeScale.predicate = NSPredicate(format: "large_scale == 1")
+            largeScale.predicate = NSPredicate(format: "large_scale == YES")
             largeScale.lineColor = NSExpression(forConstantValue: MapLayerStyle.CuratedRoads.largeScaleColor)
             largeScale.lineWidth = NSExpression(forConstantValue: NSNumber(value: Float(MapLayerStyle.CuratedRoads.largeScaleWidth)))
             largeScale.lineJoin = NSExpression(forConstantValue: "round")
