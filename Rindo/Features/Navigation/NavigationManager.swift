@@ -33,8 +33,8 @@ final class NavigationManager {
     private static let rerouteCooldownSeconds: TimeInterval = 30
     private static let deviationThresholdM: Double = 30
 
-    // 音声トリガ距離閾値（m）
-    private static let voiceTriggerDistances: [Double] = [200, 100, 50]
+    // 音声トリガ距離閾値（m） — RideMode により外部から設定可能
+    var voiceTriggerDistances: [Double] = [200, 100, 50]
 
     // 再ルート用ウェイポイント
     private var originalWaypoints: [CLLocationCoordinate2D] = []
@@ -163,7 +163,7 @@ final class NavigationManager {
     }
 
     private func triggerVoiceIfNeeded(maneuver: NavigationManeuver, distanceM: Double) {
-        for threshold in Self.voiceTriggerDistances {
+        for threshold in voiceTriggerDistances {
             if distanceM <= threshold {
                 let key = "m\(currentManeuverIndex)_\(Int(threshold))m"
                 let distText = threshold >= 100

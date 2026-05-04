@@ -1,14 +1,71 @@
+import CoreLocation
 import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AuthService.self) private var auth
 
+    var offlineMapManager: OfflineMapManager?
+    var homeCoordinate: CLLocationCoordinate2D?
     var onSelectImportedRoute: ((ImportedRoute) -> Void)?
+
+    // 走行モード・リマインダー
+    @AppStorage("rideMode") private var rideModeRaw = RideMode.leisure.rawValue
+    @AppStorage("breakIntervalMinutes") private var breakIntervalMinutes = 60
+    @AppStorage("refuelIntervalKm") private var refuelIntervalKm = 50.0
 
     var body: some View {
         NavigationStack {
             List {
+                // 走行モード
+                Section {
+                    Picker("走行モード", selection: $rideModeRaw) {
+                        ForEach(RideMode.allCases) { mode in
+                            Label(mode.displayName, systemImage: mode.icon)
+                                .tag(mode.rawValue)
+                        }
+                    }
+                } header: {
+                    Text("走行モード")
+                } footer: {
+                    if let mode = RideMode(rawValue: rideModeRaw) {
+                        Text(mode.description)
+                    }
+                }
+
+                // リマインダー
+                Section {
+                    Picker("休憩リマインダー", selection: $breakIntervalMinutes) {
+                        Text("なし").tag(0)
+                        Text("30分ごと").tag(30)
+                        Text("60分ごと").tag(60)
+                        Text("90分ごと").tag(90)
+                    }
+                    Picker("補給リマインダー", selection: $refuelIntervalKm) {
+                        Text("なし").tag(0.0)
+                        Text("30kmごと").tag(30.0)
+                        Text("50kmごと").tag(50.0)
+                        Text("80kmごと").tag(80.0)
+                    }
+                } header: {
+                    Text("リマインダー")
+                } footer: {
+                    Text("通勤モードではリマインダーは無効になります")
+                }
+
+                // オフラインマップ
+                if let manager = offlineMapManager {
+                    Section {
+                        NavigationLink {
+                            OfflineMapView(manager: manager, homeCoordinate: homeCoordinate)
+                        } label: {
+                            Label("オフラインマップ", systemImage: "arrow.down.circle")
+                        }
+                    } header: {
+                        Text("オフライン")
+                    }
+                }
+
                 // GPX ルート管理
                 Section {
                     NavigationLink {

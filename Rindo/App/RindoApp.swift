@@ -11,6 +11,7 @@ struct RindoApp: App {
                 .environment(auth)
                 .task {
                     await auth.restoreSession()
+                    ReminderManager.requestPermissionIfNeeded()
                 }
         }
         .modelContainer(for: [ImportedRoute.self, RideLog.self])

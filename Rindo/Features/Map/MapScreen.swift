@@ -43,6 +43,18 @@ struct MapScreen: View {
     @State private var showRideHistory = false
     @State private var showSettings = false
 
+    // 走行モード
+    @AppStorage("rideMode") private var rideModeRaw = RideMode.leisure.rawValue
+    private var rideMode: RideMode { RideMode(rawValue: rideModeRaw) ?? .leisure }
+
+    // オフラインマップ
+    @State private var offlineMapManager = OfflineMapManager()
+
+    // リマインダー
+    @State private var reminderManager = ReminderManager()
+    @AppStorage("breakIntervalMinutes") private var breakIntervalMinutes = 60
+    @AppStorage("refuelIntervalKm") private var refuelIntervalKm = 50.0
+
     // エラー
     @State private var errorMessage: String?
 
@@ -153,7 +165,10 @@ struct MapScreen: View {
             .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showSettings) {
-            SettingsView(onSelectImportedRoute: { route in
+            SettingsView(
+                offlineMapManager: offlineMapManager,
+                homeCoordinate: savedLocations.first(where: { $0.category == .home })?.coordinate,
+                onSelectImportedRoute: { route in
                 selectImportedRoute(route)
             })
             .environment(auth)
@@ -335,6 +350,17 @@ struct MapScreen: View {
             }
         }
 
+        // リマインダー設定
+        if rideMode.remindersEnabled {
+            reminderManager.breakIntervalMinutes = breakIntervalMinutes
+            reminderManager.refuelIntervalKm = refuelIntervalKm
+        } else {
+            reminderManager.breakIntervalMinutes = 0
+            reminderManager.refuelIntervalKm = 0
+        }
+        reminderManager.voiceGuide = navManager.voiceGuide
+        rideRecorder.reminderManager = reminderManager
+
         rideRecorder.start()
         if !locationService.isTracking {
             locationService.startTracking()
@@ -343,6 +369,7 @@ struct MapScreen: View {
 
     private func stopRideRecording() {
         guard let summary = rideRecorder.stop() else { return }
+        rideRecorder.reminderManager = nil
         locationService.rideRecorder = nil
         if !isNavigating {
             locationService.stopTracking()
@@ -414,6 +441,9 @@ struct MapScreen: View {
         }
         isNavigating = true
 
+        // 走行モードの音声トリガ距離を適用
+        navManager.voiceTriggerDistances = rideMode.voiceTriggerDistances
+
         // Valhalla ルートがある場合はターンバイターンナビを開始
         if let vRoute = valhallaRoute {
             navManager.start(
@@ -422,9 +452,9 @@ struct MapScreen: View {
             )
         }
 
-        // ナビ開始時に現在地付近をズームイン（zoom 17）
+        // ナビ開始時に現在地付近をズームイン
         if let loc = locationService.currentLocation {
-            applyFocus(loc.coordinate, zoom: 17)
+            applyFocus(loc.coordinate, zoom: rideMode.navZoomLevel)
         }
     }
 

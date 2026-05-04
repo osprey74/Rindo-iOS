@@ -49,6 +49,10 @@
 		E92862C8C533F54008FDD2C7 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B1A15858FEB15AE9006E214 /* LocationService.swift */; };
 		FA34360B6E829D4B487E100B /* sapporo-osm-cycleways.geojson in Resources */ = {isa = PBXBuildFile; fileRef = CF5DB96DA00E28EF8F1EB3E7 /* sapporo-osm-cycleways.geojson */; };
 		FE4B30385D2224ABC06F6183 /* RindoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFA4C4B0A1E7087270345C93 /* RindoTests.swift */; };
+		D388C6963D6842D055E19A7C /* RideMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90EA114D92EC41C4CCD41C8D /* RideMode.swift */; };
+		C9885FB26B4D88ED60DC7E7A /* ReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9262E3CECA0FF0129BB20DE0 /* ReminderManager.swift */; };
+		6D783ADC2FAD277A5A80583D /* OfflineMapManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77E39DF8631195B41F7071A1 /* OfflineMapManager.swift */; };
+		937DF5E6ECDEC1EB03F7E43B /* OfflineMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D848DB2C3916D7C4B0F390D /* OfflineMapView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -107,6 +111,10 @@
 		FD7543B6BE250549AAFD1264 /* RideLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideLog.swift; sourceTree = "<group>"; };
 		FE42314A1E5AAB7B68C0124F /* NavigationInfoPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationInfoPanel.swift; sourceTree = "<group>"; };
 		FFE64A0AA9246E333D8E57F1 /* ArrowImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrowImage.swift; sourceTree = "<group>"; };
+		90EA114D92EC41C4CCD41C8D /* RideMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideMode.swift; sourceTree = "<group>"; };
+		9262E3CECA0FF0129BB20DE0 /* ReminderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderManager.swift; sourceTree = "<group>"; };
+		77E39DF8631195B41F7071A1 /* OfflineMapManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapManager.swift; sourceTree = "<group>"; };
+		2D848DB2C3916D7C4B0F390D /* OfflineMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -138,6 +146,7 @@
 		244696AD8E215D4ADEBA9F6C /* Storage */ = {
 			isa = PBXGroup;
 			children = (
+				77E39DF8631195B41F7071A1 /* OfflineMapManager.swift */,
 				F83028F5261926B98208F5A6 /* KeychainStore.swift */,
 			);
 			path = Storage;
@@ -228,6 +237,8 @@
 		6B74B15C29CECFCD220DDF45 /* Ride */ = {
 			isa = PBXGroup;
 			children = (
+				90EA114D92EC41C4CCD41C8D /* RideMode.swift */,
+				9262E3CECA0FF0129BB20DE0 /* ReminderManager.swift */,
 				26110D02CCC4D83369DE6A76 /* GPXExporter.swift */,
 				FD7543B6BE250549AAFD1264 /* RideLog.swift */,
 				2178CB9675CF7CA17D630E78 /* RideRecorder.swift */,
@@ -260,6 +271,7 @@
 		A5F520424019E2969666AB1F /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				2D848DB2C3916D7C4B0F390D /* OfflineMapView.swift */,
 				5AC7EDBB7419A7E80D390551 /* SettingsView.swift */,
 			);
 			path = Settings;
@@ -470,6 +482,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D388C6963D6842D055E19A7C /* RideMode.swift in Sources */,
+				C9885FB26B4D88ED60DC7E7A /* ReminderManager.swift in Sources */,
+				6D783ADC2FAD277A5A80583D /* OfflineMapManager.swift in Sources */,
+				937DF5E6ECDEC1EB03F7E43B /* OfflineMapView.swift in Sources */,
 				AFEF81B0A57DB796124B17F7 /* APIClient.swift in Sources */,
 				DA3EB52CC28D9C6E560328F1 /* AppConfig.swift in Sources */,
 				ADD9F697F09A8E082236B323 /* ArrowImage.swift in Sources */,

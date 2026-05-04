@@ -27,6 +27,7 @@ final class RideRecorder {
 
     // 設定
     var weightKg: Double = 70
+    var reminderManager: ReminderManager?
 
     // 内部
     private var startTime: Date?
@@ -59,6 +60,7 @@ final class RideRecorder {
         trackPoints = []
         lastLocation = nil
         recentAltitudes = []
+        reminderManager?.reset()
 
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -155,6 +157,7 @@ final class RideRecorder {
     private func tick() {
         guard state == .recording, let start = startTime else { return }
         elapsedSeconds = Date().timeIntervalSince(start) - pausedDuration
+        reminderManager?.check(elapsedSeconds: elapsedSeconds, totalDistanceM: totalDistanceM)
     }
 
     private func updateGrade(altitude: Double, time: Date) {
