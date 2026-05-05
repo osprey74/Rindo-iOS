@@ -15,8 +15,12 @@ struct RindoMapView: UIViewRepresentable {
     // 走行軌跡
     var recordedTrack: [RideRecorder.RecordedTrackPoint]
 
+    // キュレーションサイクリングロード
+    var cyclingRoads: [CyclingRoadFeature] = []
+    var onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)?
+
     func makeCoordinator() -> Coordinator {
-        Coordinator()
+        Coordinator(onCyclingRoadTapped: onCyclingRoadTapped)
     }
 
     func makeUIView(context: Context) -> MLNMapView {
@@ -44,6 +48,7 @@ struct RindoMapView: UIViewRepresentable {
     }
 
     func updateUIView(_ mapView: MLNMapView, context: Context) {
+        context.coordinator.onCyclingRoadTapped = onCyclingRoadTapped
         context.coordinator.update(
             mapView: mapView,
             selectedRoute: selectedRoute,
@@ -52,7 +57,8 @@ struct RindoMapView: UIViewRepresentable {
             currentLocation: locationService.currentLocation,
             course: locationService.course,
             isNavigating: isNavigating,
-            recordedTrack: recordedTrack
+            recordedTrack: recordedTrack,
+            cyclingRoads: cyclingRoads
         )
         if let coord = focusCoordinate {
             let zoom = focusZoomLevel ?? 15
@@ -87,6 +93,17 @@ struct RindoMapView: UIViewRepresentable {
         private var navIsActive = false
         private var trackPoints: [RideRecorder.RecordedTrackPoint] = []
 
+        // キュレーションサイクリングロード（アノテーション方式 — タイル変換を迂回）
+        private var cyclingRoadAnnotations: [MLNPolyline] = []
+        private var annotationToRoad: [ObjectIdentifier: CyclingRoadFeature] = [:]
+        private var cyclingRoadFeatures: [CyclingRoadFeature] = []
+        var onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)?
+
+        init(onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)? = nil) {
+            self.onCyclingRoadTapped = onCyclingRoadTapped
+            super.init()
+        }
+
         func update(
             mapView: MLNMapView,
             selectedRoute: SavedRoute?,
@@ -95,7 +112,8 @@ struct RindoMapView: UIViewRepresentable {
             currentLocation: CLLocation?,
             course: Double,
             isNavigating: Bool,
-            recordedTrack: [RideRecorder.RecordedTrackPoint]
+            recordedTrack: [RideRecorder.RecordedTrackPoint],
+            cyclingRoads: [CyclingRoadFeature]
         ) {
             currentRoute = selectedRoute
             currentLocations = savedLocations
@@ -104,6 +122,12 @@ struct RindoMapView: UIViewRepresentable {
             navLocation = currentLocation
             navCourse = course
             navIsActive = isNavigating
+            // サイクリングロードアノテーションの追加（初回のみ）
+            if cyclingRoads.count != cyclingRoadFeatures.count {
+                cyclingRoadFeatures = cyclingRoads
+                applyCuratedRoadAnnotations(to: mapView)
+            }
+
             guard styleLoaded else { return }
             applyAllLayers(to: mapView)
         }
@@ -111,7 +135,12 @@ struct RindoMapView: UIViewRepresentable {
         // MARK: - Tap Handler
 
         func mapView(_ mapView: MLNMapView, didSelect annotation: MLNAnnotation) {
-            // MLNAnnotation 経由のタップは使わない
+            // サイクリングロードアノテーションのタップ
+            if let polyline = annotation as? MLNPolyline,
+               let road = annotationToRoad[ObjectIdentifier(polyline)] {
+                onCyclingRoadTapped?(road)
+                mapView.deselectAnnotation(annotation, animated: false)
+            }
         }
 
         @objc func handleMapTap(_ sender: UITapGestureRecognizer) {
@@ -142,7 +171,27 @@ struct RindoMapView: UIViewRepresentable {
         }
 
         func mapView(_ mapView: MLNMapView, annotationCanShowCallout annotation: MLNAnnotation) -> Bool {
-            true
+            // ポリラインはコールアウト不要（詳細カードで表示）
+            annotation is MLNPointAnnotation
+        }
+
+        // MARK: - Annotation Styling
+
+        func mapView(_ mapView: MLNMapView, strokeColorForShapeAnnotation annotation: MLNShape) -> UIColor {
+            if let polyline = annotation as? MLNPolyline,
+               let road = annotationToRoad[ObjectIdentifier(polyline)],
+               road.properties.isLargeScale {
+                return MapLayerStyle.CuratedRoads.largeScaleColor
+            }
+            return MapLayerStyle.CuratedRoads.color
+        }
+
+        func mapView(_ mapView: MLNMapView, lineWidthForPolylineAnnotation annotation: MLNPolyline) -> CGFloat {
+            if let road = annotationToRoad[ObjectIdentifier(annotation)],
+               road.properties.isLargeScale {
+                return MapLayerStyle.CuratedRoads.largeScaleWidth
+            }
+            return MapLayerStyle.CuratedRoads.exclusiveWidth
         }
 
         func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
@@ -159,6 +208,30 @@ struct RindoMapView: UIViewRepresentable {
             applyLocationMarkers(style: style)
             applyTrackLayer(style: style)
             applyNavigationLayers(style: style)
+        }
+
+        // MARK: - Curated Cycling Roads (Annotation-based)
+
+        /// MLNPolyline アノテーションとして追加（MLNShapeSource のタイル変換を完全に迂回）
+        private func applyCuratedRoadAnnotations(to mapView: MLNMapView) {
+            // 既存アノテーションを除去
+            if !cyclingRoadAnnotations.isEmpty {
+                mapView.removeAnnotations(cyclingRoadAnnotations)
+                cyclingRoadAnnotations.removeAll()
+                annotationToRoad.removeAll()
+            }
+
+            guard !cyclingRoadFeatures.isEmpty else { return }
+
+            for road in cyclingRoadFeatures {
+                var coords = road.coordinates
+                guard coords.count >= 2 else { continue }
+                let polyline = MLNPolyline(coordinates: &coords, count: UInt(coords.count))
+                cyclingRoadAnnotations.append(polyline)
+                annotationToRoad[ObjectIdentifier(polyline)] = road
+            }
+
+            mapView.addAnnotations(cyclingRoadAnnotations)
         }
 
         // MARK: - Selected Route (server)

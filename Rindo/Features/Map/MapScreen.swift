@@ -50,6 +50,12 @@ struct MapScreen: View {
     @AppStorage("breakIntervalMinutes") private var breakIntervalMinutes = 60
     @AppStorage("refuelIntervalKm") private var refuelIntervalKm = 50.0
 
+    // サイクリングロード
+    @State private var cyclingRoads: [CyclingRoadFeature] = []
+    @State private var selectedCyclingRoad: CyclingRoadFeature?
+    @State private var cyclingRoadElevation: ElevationProfile?
+    @State private var isLoadingCyclingRoadElevation = false
+
     // エラー
     @State private var errorMessage: String?
 
@@ -64,7 +70,9 @@ struct MapScreen: View {
                 navigationCoordinates: navigationCoordinates,
                 locationService: locationService,
                 isNavigating: isNavigating,
-                recordedTrack: rideRecorder.isRecording ? rideRecorder.trackPoints : []
+                recordedTrack: rideRecorder.isRecording ? rideRecorder.trackPoints : [],
+                cyclingRoads: cyclingRoads,
+                onCyclingRoadTapped: { road in selectCyclingRoad(road) }
             )
             .ignoresSafeArea()
 
@@ -107,6 +115,14 @@ struct MapScreen: View {
                         serverRouteInfoBar(route)
                     } else if let imported = activeImportedRoute {
                         importedRouteInfoBar(imported)
+                    } else if let road = selectedCyclingRoad {
+                        CyclingRoadDetailCard(
+                            road: road,
+                            elevationProfile: cyclingRoadElevation,
+                            isLoadingElevation: isLoadingCyclingRoadElevation,
+                            onStartNavigation: { startCyclingRoadNavigation(road) },
+                            onDismiss: { dismissCyclingRoad() }
+                        )
                     }
                 }
             }
@@ -557,8 +573,26 @@ struct MapScreen: View {
     // MARK: - Data Loading
 
     private func loadAllLayers() async {
+        // サイクリングロードは認証不要（公開API）
+        await loadCyclingRoads()
+
         if auth.isAuthenticated {
             await loadLocations()
+        }
+    }
+
+    private func loadCyclingRoads() async {
+        guard let url = Bundle.main.url(forResource: "sapporo-cyclingroad.corrected", withExtension: "geojson") else {
+            errorMessage = "サイクリングロード: バンドルファイルが見つかりません"
+            return
+        }
+        do {
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            let response = try decoder.decode(CyclingRoadsResponse.self, from: data)
+            cyclingRoads = response.features
+        } catch {
+            errorMessage = "サイクリングロード: \(error.localizedDescription)"
         }
     }
 
@@ -567,6 +601,65 @@ struct MapScreen: View {
             let response = try await APIClient.shared.fetch(LocationsResponse.self, path: "/api/locations")
             savedLocations = response.locations
         } catch {}
+    }
+
+    // MARK: - Cycling Road Selection
+
+    private func selectCyclingRoad(_ road: CyclingRoadFeature) {
+        // 既存ルートがあれば閉じない（サイクリングロードカードのみ切替）
+        if selectedRoute != nil || activeImportedRoute != nil { return }
+
+        withAnimation {
+            selectedCyclingRoad = road
+            cyclingRoadElevation = nil
+        }
+
+        // 標高プロファイルを非同期取得
+        Task {
+            isLoadingCyclingRoadElevation = true
+            cyclingRoadElevation = try? await ElevationService.fetchProfile(
+                coordinates: road.coordinatePairs
+            )
+            isLoadingCyclingRoadElevation = false
+        }
+    }
+
+    private func dismissCyclingRoad() {
+        withAnimation {
+            selectedCyclingRoad = nil
+            cyclingRoadElevation = nil
+            isLoadingCyclingRoadElevation = false
+        }
+    }
+
+    /// サイクリングロードからナビを開始
+    private func startCyclingRoadNavigation(_ road: CyclingRoadFeature) {
+        let coords = road.coordinates
+        guard coords.count >= 2 else { return }
+
+        // 既存ルートをクリアしてナビ座標をセット
+        clearRoute()
+        navigationCoordinates = coords
+        selectedCyclingRoad = nil
+        cyclingRoadElevation = nil
+
+        // Valhalla でターンバイターンルートを取得（始点・終点のみ）
+        let start = coords.first!
+        let end = coords.last!
+        Task {
+            do {
+                valhallaRoute = try await ValhallaService.fetchRoute(
+                    waypoints: [start, end]
+                )
+                if let vRoute = valhallaRoute {
+                    navigationCoordinates = vRoute.coordinates
+                }
+            } catch {
+                valhallaRoute = nil
+            }
+            // ナビ開始
+            startNavigation()
+        }
     }
 
     // MARK: - Helpers

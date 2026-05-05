@@ -21,6 +21,7 @@
 		588E5ADDDC04A192F5E53ECB /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F83028F5261926B98208F5A6 /* KeychainStore.swift */; };
 		5A0221F62EDCF5FE52413E5A /* ElevationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8124F62BA1F39CA06E0856F3 /* ElevationService.swift */; };
 		5C914F348E476B09A018CD77 /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = 4014E81F7ECF771C2CCBB096 /* MapLibre */; };
+		5DC4418FADACDD1B7F7DA8DE /* CyclingRoad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71405504155574B612FA0518 /* CyclingRoad.swift */; };
 		6486B6C8DDC6FD2A3F67D93D /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E95BD14DF26654CDD9E622B9 /* AuthService.swift */; };
 		6A70778E5A39F37BD3D81140 /* GPXParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B2DE7731FF35FF14D423B4 /* GPXParser.swift */; };
 		6E0C1886E773CF1DA58FA6B1 /* AuthModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9579908B93DA4B69A6A3B48D /* AuthModels.swift */; };
@@ -29,9 +30,13 @@
 		7915C5C1D8E9403536866EAB /* RideRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2178CB9675CF7CA17D630E78 /* RideRecorder.swift */; };
 		7A79338779E32BDA4B236D83 /* MapLayerStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C0943BE4F846550792954B6 /* MapLayerStyle.swift */; };
 		7BBD1C6051B3F648113F0B38 /* NavigationInfoPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE42314A1E5AAB7B68C0124F /* NavigationInfoPanel.swift */; };
+		7C3D5E1ACD160617E3203BD5 /* ReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FAF34924EC1D7D51E8ED219 /* ReminderManager.swift */; };
 		7CEE0433DF32E97C4D244BB3 /* ImportedRoutesPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D637225DF76267C253FE4E /* ImportedRoutesPanel.swift */; };
+		818A022A57CDC1061A25EAFA /* sapporo-cyclingroad.corrected.geojson in Resources */ = {isa = PBXBuildFile; fileRef = 492D9ADFEF48546DD80C94CF /* sapporo-cyclingroad.corrected.geojson */; };
+		819026786C7EDE5F6B4B5A11 /* OfflineMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5734F82D31A4CF962DC9497 /* OfflineMapView.swift */; };
 		8A1541D965875EC4741F411E /* SimpleNavView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70C8241C9BB2BCA598AD68F8 /* SimpleNavView.swift */; };
 		8CA5AD460E26591D1783DD2F /* TurnByTurnPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAFCE5B4E6062940B8E720D2 /* TurnByTurnPanel.swift */; };
+		8D8D53CED77FA4D9C50D5113 /* OfflineMapManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58B38C0E43D8BFA955E53908 /* OfflineMapManager.swift */; };
 		8E67144E85CCD66227E9690B /* SavedLocationsPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC2258D014E2B1876445AA2 /* SavedLocationsPanel.swift */; };
 		990A6E8A4E8491E2C52B720F /* ElevationChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE26C14188683CAC54851BE2 /* ElevationChart.swift */; };
 		9D40CA5DE6A79658DF0489F8 /* MapScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E56549D369BA4102A5F982 /* MapScreen.swift */; };
@@ -42,15 +47,13 @@
 		CC22BC1146737844C82C69E9 /* RindoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F29A6D8ADCA017F35CAD45 /* RindoApp.swift */; };
 		CDB46ACBD872C80BD68686AF /* RindoMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71577F24BBF2F35D16CD3844 /* RindoMapView.swift */; };
 		D073F1DDDBE435367813CB22 /* ValhallaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F72064002F7AE128E36BEAAB /* ValhallaService.swift */; };
+		D232A0C914825ED8D1C53985 /* RideMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C5D96D47939CD2BE33D981C /* RideMode.swift */; };
+		D2EA92B5217A366A454435EC /* CyclingRoadDetailCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EA1887C3B7D6F5431D37B68 /* CyclingRoadDetailCard.swift */; };
 		DA3EB52CC28D9C6E560328F1 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C00D9FA0B2E6348D1D31150 /* AppConfig.swift */; };
 		DB9321C37D5A648B88DC9FAE /* ImportedRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32B76B8124466E1A7074EBFB /* ImportedRoute.swift */; };
 		E65D48F07CB4F0B6B901ECC2 /* RideLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD7543B6BE250549AAFD1264 /* RideLog.swift */; };
 		E92862C8C533F54008FDD2C7 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B1A15858FEB15AE9006E214 /* LocationService.swift */; };
 		FE4B30385D2224ABC06F6183 /* RindoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFA4C4B0A1E7087270345C93 /* RindoTests.swift */; };
-		D388C6963D6842D055E19A7C /* RideMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90EA114D92EC41C4CCD41C8D /* RideMode.swift */; };
-		C9885FB26B4D88ED60DC7E7A /* ReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9262E3CECA0FF0129BB20DE0 /* ReminderManager.swift */; };
-		6D783ADC2FAD277A5A80583D /* OfflineMapManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77E39DF8631195B41F7071A1 /* OfflineMapManager.swift */; };
-		937DF5E6ECDEC1EB03F7E43B /* OfflineMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D848DB2C3916D7C4B0F390D /* OfflineMapView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,15 +73,21 @@
 		2178CB9675CF7CA17D630E78 /* RideRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideRecorder.swift; sourceTree = "<group>"; };
 		26110D02CCC4D83369DE6A76 /* GPXExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXExporter.swift; sourceTree = "<group>"; };
 		27D637225DF76267C253FE4E /* ImportedRoutesPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedRoutesPanel.swift; sourceTree = "<group>"; };
+		2EA1887C3B7D6F5431D37B68 /* CyclingRoadDetailCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyclingRoadDetailCard.swift; sourceTree = "<group>"; };
 		32B76B8124466E1A7074EBFB /* ImportedRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedRoute.swift; sourceTree = "<group>"; };
 		3BAF57B3E3CC0F0B8446A3B5 /* VoiceGuide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceGuide.swift; sourceTree = "<group>"; };
+		3FAF34924EC1D7D51E8ED219 /* ReminderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderManager.swift; sourceTree = "<group>"; };
 		4426995F5955659EEDDC9674 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		492D9ADFEF48546DD80C94CF /* sapporo-cyclingroad.corrected.geojson */ = {isa = PBXFileReference; path = "sapporo-cyclingroad.corrected.geojson"; sourceTree = "<group>"; };
 		4C0943BE4F846550792954B6 /* MapLayerStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapLayerStyle.swift; sourceTree = "<group>"; };
 		54F29A6D8ADCA017F35CAD45 /* RindoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RindoApp.swift; sourceTree = "<group>"; };
+		58B38C0E43D8BFA955E53908 /* OfflineMapManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapManager.swift; sourceTree = "<group>"; };
 		5AC7EDBB7419A7E80D390551 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		5C0F0FB41D11F02841C7AC55 /* NavigationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationManager.swift; sourceTree = "<group>"; };
 		60006A75E9877B3A1585AA22 /* AttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionView.swift; sourceTree = "<group>"; };
+		6C5D96D47939CD2BE33D981C /* RideMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideMode.swift; sourceTree = "<group>"; };
 		70C8241C9BB2BCA598AD68F8 /* SimpleNavView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleNavView.swift; sourceTree = "<group>"; };
+		71405504155574B612FA0518 /* CyclingRoad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyclingRoad.swift; sourceTree = "<group>"; };
 		71577F24BBF2F35D16CD3844 /* RindoMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RindoMapView.swift; sourceTree = "<group>"; };
 		7A0FDB08B25A72EF5BE3C18E /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		8124F62BA1F39CA06E0856F3 /* ElevationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationService.swift; sourceTree = "<group>"; };
@@ -97,6 +106,7 @@
 		BB0626BA985CE2903E3E0D20 /* Rindo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Rindo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CAFCE5B4E6062940B8E720D2 /* TurnByTurnPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnByTurnPanel.swift; sourceTree = "<group>"; };
 		CE26C14188683CAC54851BE2 /* ElevationChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationChart.swift; sourceTree = "<group>"; };
+		E5734F82D31A4CF962DC9497 /* OfflineMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapView.swift; sourceTree = "<group>"; };
 		E6B2DE7731FF35FF14D423B4 /* GPXParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXParser.swift; sourceTree = "<group>"; };
 		E95BD14DF26654CDD9E622B9 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		EDC2258D014E2B1876445AA2 /* SavedLocationsPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedLocationsPanel.swift; sourceTree = "<group>"; };
@@ -107,10 +117,6 @@
 		FD7543B6BE250549AAFD1264 /* RideLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideLog.swift; sourceTree = "<group>"; };
 		FE42314A1E5AAB7B68C0124F /* NavigationInfoPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationInfoPanel.swift; sourceTree = "<group>"; };
 		FFE64A0AA9246E333D8E57F1 /* ArrowImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrowImage.swift; sourceTree = "<group>"; };
-		90EA114D92EC41C4CCD41C8D /* RideMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideMode.swift; sourceTree = "<group>"; };
-		9262E3CECA0FF0129BB20DE0 /* ReminderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderManager.swift; sourceTree = "<group>"; };
-		77E39DF8631195B41F7071A1 /* OfflineMapManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapManager.swift; sourceTree = "<group>"; };
-		2D848DB2C3916D7C4B0F390D /* OfflineMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -142,8 +148,8 @@
 		244696AD8E215D4ADEBA9F6C /* Storage */ = {
 			isa = PBXGroup;
 			children = (
-				77E39DF8631195B41F7071A1 /* OfflineMapManager.swift */,
 				F83028F5261926B98208F5A6 /* KeychainStore.swift */,
+				58B38C0E43D8BFA955E53908 /* OfflineMapManager.swift */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
@@ -206,6 +212,7 @@
 			isa = PBXGroup;
 			children = (
 				9579908B93DA4B69A6A3B48D /* AuthModels.swift */,
+				71405504155574B612FA0518 /* CyclingRoad.swift */,
 				B067FE8D627B1650A1D72589 /* SavedLocation.swift */,
 				0DBD9C5EF227A9F97B07B5EC /* SavedRoute.swift */,
 			);
@@ -233,10 +240,10 @@
 		6B74B15C29CECFCD220DDF45 /* Ride */ = {
 			isa = PBXGroup;
 			children = (
-				90EA114D92EC41C4CCD41C8D /* RideMode.swift */,
-				9262E3CECA0FF0129BB20DE0 /* ReminderManager.swift */,
 				26110D02CCC4D83369DE6A76 /* GPXExporter.swift */,
+				3FAF34924EC1D7D51E8ED219 /* ReminderManager.swift */,
 				FD7543B6BE250549AAFD1264 /* RideLog.swift */,
+				6C5D96D47939CD2BE33D981C /* RideMode.swift */,
 				2178CB9675CF7CA17D630E78 /* RideRecorder.swift */,
 			);
 			path = Ride;
@@ -249,6 +256,7 @@
 				4426995F5955659EEDDC9674 /* Info.plist */,
 				A4A3C05795184CB478A6CD35 /* osm-style.json */,
 				99E7B4EAED30E58C7A604C26 /* Rindo.entitlements */,
+				492D9ADFEF48546DD80C94CF /* sapporo-cyclingroad.corrected.geojson */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -265,7 +273,7 @@
 		A5F520424019E2969666AB1F /* Settings */ = {
 			isa = PBXGroup;
 			children = (
-				2D848DB2C3916D7C4B0F390D /* OfflineMapView.swift */,
+				E5734F82D31A4CF962DC9497 /* OfflineMapView.swift */,
 				5AC7EDBB7419A7E80D390551 /* SettingsView.swift */,
 			);
 			path = Settings;
@@ -332,6 +340,7 @@
 		BD7F3D68D9F3486C2C730F53 /* Map */ = {
 			isa = PBXGroup;
 			children = (
+				2EA1887C3B7D6F5431D37B68 /* CyclingRoadDetailCard.swift */,
 				4C0943BE4F846550792954B6 /* MapLayerStyle.swift */,
 				04E56549D369BA4102A5F982 /* MapScreen.swift */,
 				71577F24BBF2F35D16CD3844 /* RindoMapView.swift */,
@@ -456,6 +465,7 @@
 			files = (
 				31AD503AC2F54A3C374F1C21 /* Assets.xcassets in Resources */,
 				0CEDEEA9761BE5013013E191 /* osm-style.json in Resources */,
+				818A022A57CDC1061A25EAFA /* sapporo-cyclingroad.corrected.geojson in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -474,16 +484,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D388C6963D6842D055E19A7C /* RideMode.swift in Sources */,
-				C9885FB26B4D88ED60DC7E7A /* ReminderManager.swift in Sources */,
-				6D783ADC2FAD277A5A80583D /* OfflineMapManager.swift in Sources */,
-				937DF5E6ECDEC1EB03F7E43B /* OfflineMapView.swift in Sources */,
 				AFEF81B0A57DB796124B17F7 /* APIClient.swift in Sources */,
 				DA3EB52CC28D9C6E560328F1 /* AppConfig.swift in Sources */,
 				ADD9F697F09A8E082236B323 /* ArrowImage.swift in Sources */,
 				51A6917F0A0C51D8D965BAEB /* AttributionView.swift in Sources */,
 				6E0C1886E773CF1DA58FA6B1 /* AuthModels.swift in Sources */,
 				6486B6C8DDC6FD2A3F67D93D /* AuthService.swift in Sources */,
+				5DC4418FADACDD1B7F7DA8DE /* CyclingRoad.swift in Sources */,
+				D2EA92B5217A366A454435EC /* CyclingRoadDetailCard.swift in Sources */,
 				990A6E8A4E8491E2C52B720F /* ElevationChart.swift in Sources */,
 				5A0221F62EDCF5FE52413E5A /* ElevationService.swift in Sources */,
 				6E54D4713185D14D865D068E /* GPXExporter.swift in Sources */,
@@ -499,9 +507,13 @@
 				9D40CA5DE6A79658DF0489F8 /* MapScreen.swift in Sources */,
 				7BBD1C6051B3F648113F0B38 /* NavigationInfoPanel.swift in Sources */,
 				B2083FDE2480A053FAFBAE4E /* NavigationManager.swift in Sources */,
+				8D8D53CED77FA4D9C50D5113 /* OfflineMapManager.swift in Sources */,
+				819026786C7EDE5F6B4B5A11 /* OfflineMapView.swift in Sources */,
 				AA6D4A9C089FA4F1E41E207C /* PolylineDecoder.swift in Sources */,
+				7C3D5E1ACD160617E3203BD5 /* ReminderManager.swift in Sources */,
 				0FE44E863F1B9334F5C9E13C /* RideHistoryPanel.swift in Sources */,
 				E65D48F07CB4F0B6B901ECC2 /* RideLog.swift in Sources */,
+				D232A0C914825ED8D1C53985 /* RideMode.swift in Sources */,
 				7915C5C1D8E9403536866EAB /* RideRecorder.swift in Sources */,
 				CC22BC1146737844C82C69E9 /* RindoApp.swift in Sources */,
 				CDB46ACBD872C80BD68686AF /* RindoMapView.swift in Sources */,
