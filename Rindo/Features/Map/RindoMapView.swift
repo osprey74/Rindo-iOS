@@ -95,6 +95,7 @@ struct RindoMapView: UIViewRepresentable {
 
         // キュレーションサイクリングロード（アノテーション方式 — タイル変換を迂回）
         private var cyclingRoadAnnotations: [MLNPolyline] = []
+        private var cyclingRoadLabelAnnotations: [MLNPointAnnotation] = []
         private var annotationToRoad: [ObjectIdentifier: CyclingRoadFeature] = [:]
         private var cyclingRoadFeatures: [CyclingRoadFeature] = []
         var onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)?
@@ -212,7 +213,7 @@ struct RindoMapView: UIViewRepresentable {
 
         // MARK: - Curated Cycling Roads (Annotation-based)
 
-        /// MLNPolyline アノテーションとして追加（MLNShapeSource のタイル変換を完全に迂回）
+        /// MLNPolyline + ラベル用 MLNPointAnnotation を追加
         private func applyCuratedRoadAnnotations(to mapView: MLNMapView) {
             // 既存アノテーションを除去
             if !cyclingRoadAnnotations.isEmpty {
@@ -220,18 +221,76 @@ struct RindoMapView: UIViewRepresentable {
                 cyclingRoadAnnotations.removeAll()
                 annotationToRoad.removeAll()
             }
+            if !cyclingRoadLabelAnnotations.isEmpty {
+                mapView.removeAnnotations(cyclingRoadLabelAnnotations)
+                cyclingRoadLabelAnnotations.removeAll()
+            }
 
             guard !cyclingRoadFeatures.isEmpty else { return }
 
             for road in cyclingRoadFeatures {
                 var coords = road.coordinates
                 guard coords.count >= 2 else { continue }
+
+                // ルートライン
                 let polyline = MLNPolyline(coordinates: &coords, count: UInt(coords.count))
                 cyclingRoadAnnotations.append(polyline)
                 annotationToRoad[ObjectIdentifier(polyline)] = road
+
+                // ラベル（長いルートは複数配置）
+                let labelPositions: [Int]
+                if coords.count > 200 {
+                    labelPositions = [coords.count / 4, coords.count / 2, coords.count * 3 / 4]
+                } else {
+                    labelPositions = [coords.count / 2]
+                }
+                for pos in labelPositions {
+                    let label = MLNPointAnnotation()
+                    label.coordinate = coords[pos]
+                    label.title = road.properties.name
+                    cyclingRoadLabelAnnotations.append(label)
+                }
             }
 
             mapView.addAnnotations(cyclingRoadAnnotations)
+            mapView.addAnnotations(cyclingRoadLabelAnnotations)
+        }
+
+        func mapView(_ mapView: MLNMapView, viewFor annotation: MLNAnnotation) -> MLNAnnotationView? {
+            // ラベル用ポイントアノテーションのカスタムビュー
+            guard let pointAnnotation = annotation as? MLNPointAnnotation,
+                  cyclingRoadLabelAnnotations.contains(pointAnnotation) else {
+                return nil
+            }
+
+            let reuseID = "cycling-road-label"
+            var view = mapView.dequeueReusableAnnotationView(withIdentifier: reuseID)
+            if view == nil {
+                view = MLNAnnotationView(reuseIdentifier: reuseID)
+                view!.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
+            }
+
+            // 既存ラベルを除去して再生成
+            view!.subviews.forEach { $0.removeFromSuperview() }
+
+            let label = UILabel()
+            label.text = pointAnnotation.title ?? ""
+            label.font = .systemFont(ofSize: 11, weight: .medium)
+            label.textColor = .label
+            label.backgroundColor = UIColor.white.withAlphaComponent(0.5)
+            label.layer.cornerRadius = 3
+            label.clipsToBounds = true
+            label.textAlignment = .center
+            let insetPadding = UIEdgeInsets(top: 1, left: 4, bottom: 1, right: 4)
+            label.sizeToFit()
+            label.frame = label.frame.inset(by: UIEdgeInsets(
+                top: -insetPadding.top, left: -insetPadding.left,
+                bottom: -insetPadding.bottom, right: -insetPadding.right
+            ))
+            label.center = CGPoint(x: 0, y: -10)
+            view!.addSubview(label)
+
+            return view
         }
 
         // MARK: - Selected Route (server)
