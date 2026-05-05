@@ -12,11 +12,16 @@ struct RindoMapView: UIViewRepresentable {
     var navigationCoordinates: [CLLocationCoordinate2D]
     var locationService: LocationService
     var isNavigating: Bool
+    var nextManeuverCoordinate: CLLocationCoordinate2D?
     // 走行軌跡
     var recordedTrack: [RideRecorder.RecordedTrackPoint]
 
+    // キュレーションサイクリングロード
+    var cyclingRoads: [CyclingRoadFeature] = []
+    var onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)?
+
     func makeCoordinator() -> Coordinator {
-        Coordinator()
+        Coordinator(onCyclingRoadTapped: onCyclingRoadTapped)
     }
 
     func makeUIView(context: Context) -> MLNMapView {
@@ -30,6 +35,7 @@ struct RindoMapView: UIViewRepresentable {
         mapView.showsUserLocation = true
         mapView.delegate = context.coordinator
         mapView.allowsRotating = false
+        mapView.allowsTilting = false
 
         // 地点マーカータップ用ジェスチャ
         let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleMapTap(_:)))
@@ -44,6 +50,7 @@ struct RindoMapView: UIViewRepresentable {
     }
 
     func updateUIView(_ mapView: MLNMapView, context: Context) {
+        context.coordinator.onCyclingRoadTapped = onCyclingRoadTapped
         context.coordinator.update(
             mapView: mapView,
             selectedRoute: selectedRoute,
@@ -52,23 +59,36 @@ struct RindoMapView: UIViewRepresentable {
             currentLocation: locationService.currentLocation,
             course: locationService.course,
             isNavigating: isNavigating,
-            recordedTrack: recordedTrack
+            recordedTrack: recordedTrack,
+            cyclingRoads: cyclingRoads,
+            nextManeuverCoordinate: nextManeuverCoordinate
         )
         if let coord = focusCoordinate {
             let zoom = focusZoomLevel ?? 15
             mapView.setCenter(coord, zoomLevel: zoom, animated: true)
         }
 
-        // ナビ中は現在地を画面下 1/3 に追従表示
+        // ナビ中は現在地を画面下 1/3 に追従表示 + ヘッドアップ
         if isNavigating, let loc = locationService.currentLocation {
+            let course = locationService.course
+            // ヘッドアップ: 進行方向を上にする（course が有効な場合のみ）
+            if course >= 0 {
+                mapView.direction = course
+            }
+
             let coord = loc.coordinate
             let mapHeight = mapView.frame.height
-            // 現在地を画面下 1/3 に配置するため、画面中心を北方向にオフセット
+            // 現在地を画面下 1/3 に配置するため、画面中心を進行方向前方にオフセット
             let offsetY = mapHeight / 6
             let centerPoint = mapView.convert(coord, toPointTo: mapView)
             let adjustedPoint = CGPoint(x: centerPoint.x, y: centerPoint.y - offsetY)
             let adjustedCoord = mapView.convert(adjustedPoint, toCoordinateFrom: mapView)
             mapView.setCenter(adjustedCoord, animated: true)
+        } else {
+            // ナビ終了時はノースアップに戻す
+            if mapView.direction != 0 {
+                mapView.direction = 0
+            }
         }
     }
 
@@ -86,6 +106,19 @@ struct RindoMapView: UIViewRepresentable {
         private var navCourse: Double = 0
         private var navIsActive = false
         private var trackPoints: [RideRecorder.RecordedTrackPoint] = []
+        private var nextManeuverCoord: CLLocationCoordinate2D?
+
+        // キュレーションサイクリングロード（アノテーション方式 — タイル変換を迂回）
+        private var cyclingRoadAnnotations: [MLNPolyline] = []
+        private var cyclingRoadLabelAnnotations: [MLNPointAnnotation] = []
+        private var annotationToRoad: [ObjectIdentifier: CyclingRoadFeature] = [:]
+        private var cyclingRoadFeatures: [CyclingRoadFeature] = []
+        var onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)?
+
+        init(onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)? = nil) {
+            self.onCyclingRoadTapped = onCyclingRoadTapped
+            super.init()
+        }
 
         func update(
             mapView: MLNMapView,
@@ -95,7 +128,9 @@ struct RindoMapView: UIViewRepresentable {
             currentLocation: CLLocation?,
             course: Double,
             isNavigating: Bool,
-            recordedTrack: [RideRecorder.RecordedTrackPoint]
+            recordedTrack: [RideRecorder.RecordedTrackPoint],
+            cyclingRoads: [CyclingRoadFeature],
+            nextManeuverCoordinate: CLLocationCoordinate2D?
         ) {
             currentRoute = selectedRoute
             currentLocations = savedLocations
@@ -104,6 +139,13 @@ struct RindoMapView: UIViewRepresentable {
             navLocation = currentLocation
             navCourse = course
             navIsActive = isNavigating
+            nextManeuverCoord = nextManeuverCoordinate
+            // サイクリングロードアノテーションの追加（初回のみ）
+            if cyclingRoads.count != cyclingRoadFeatures.count {
+                cyclingRoadFeatures = cyclingRoads
+                applyCuratedRoadAnnotations(to: mapView)
+            }
+
             guard styleLoaded else { return }
             applyAllLayers(to: mapView)
         }
@@ -111,7 +153,12 @@ struct RindoMapView: UIViewRepresentable {
         // MARK: - Tap Handler
 
         func mapView(_ mapView: MLNMapView, didSelect annotation: MLNAnnotation) {
-            // MLNAnnotation 経由のタップは使わない
+            // サイクリングロードアノテーションのタップ
+            if let polyline = annotation as? MLNPolyline,
+               let road = annotationToRoad[ObjectIdentifier(polyline)] {
+                onCyclingRoadTapped?(road)
+                mapView.deselectAnnotation(annotation, animated: false)
+            }
         }
 
         @objc func handleMapTap(_ sender: UITapGestureRecognizer) {
@@ -142,7 +189,27 @@ struct RindoMapView: UIViewRepresentable {
         }
 
         func mapView(_ mapView: MLNMapView, annotationCanShowCallout annotation: MLNAnnotation) -> Bool {
-            true
+            // ポリラインはコールアウト不要（詳細カードで表示）
+            annotation is MLNPointAnnotation
+        }
+
+        // MARK: - Annotation Styling
+
+        func mapView(_ mapView: MLNMapView, strokeColorForShapeAnnotation annotation: MLNShape) -> UIColor {
+            if let polyline = annotation as? MLNPolyline,
+               let road = annotationToRoad[ObjectIdentifier(polyline)],
+               road.properties.isLargeScale {
+                return MapLayerStyle.CuratedRoads.largeScaleColor
+            }
+            return MapLayerStyle.CuratedRoads.color
+        }
+
+        func mapView(_ mapView: MLNMapView, lineWidthForPolylineAnnotation annotation: MLNPolyline) -> CGFloat {
+            if let road = annotationToRoad[ObjectIdentifier(annotation)],
+               road.properties.isLargeScale {
+                return MapLayerStyle.CuratedRoads.largeScaleWidth
+            }
+            return MapLayerStyle.CuratedRoads.exclusiveWidth
         }
 
         func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
@@ -159,6 +226,89 @@ struct RindoMapView: UIViewRepresentable {
             applyLocationMarkers(style: style)
             applyTrackLayer(style: style)
             applyNavigationLayers(style: style)
+            applyNextManeuverPin(style: style)
+        }
+
+        // MARK: - Curated Cycling Roads (Annotation-based)
+
+        /// MLNPolyline + ラベル用 MLNPointAnnotation を追加
+        private func applyCuratedRoadAnnotations(to mapView: MLNMapView) {
+            // 既存アノテーションを除去
+            if !cyclingRoadAnnotations.isEmpty {
+                mapView.removeAnnotations(cyclingRoadAnnotations)
+                cyclingRoadAnnotations.removeAll()
+                annotationToRoad.removeAll()
+            }
+            if !cyclingRoadLabelAnnotations.isEmpty {
+                mapView.removeAnnotations(cyclingRoadLabelAnnotations)
+                cyclingRoadLabelAnnotations.removeAll()
+            }
+
+            guard !cyclingRoadFeatures.isEmpty else { return }
+
+            for road in cyclingRoadFeatures {
+                var coords = road.coordinates
+                guard coords.count >= 2 else { continue }
+
+                // ルートライン
+                let polyline = MLNPolyline(coordinates: &coords, count: UInt(coords.count))
+                cyclingRoadAnnotations.append(polyline)
+                annotationToRoad[ObjectIdentifier(polyline)] = road
+
+                // ラベル（長いルートは複数配置）
+                let labelPositions: [Int]
+                if coords.count > 200 {
+                    labelPositions = [coords.count / 4, coords.count / 2, coords.count * 3 / 4]
+                } else {
+                    labelPositions = [coords.count / 2]
+                }
+                for pos in labelPositions {
+                    let label = MLNPointAnnotation()
+                    label.coordinate = coords[pos]
+                    label.title = road.properties.name
+                    cyclingRoadLabelAnnotations.append(label)
+                }
+            }
+
+            mapView.addAnnotations(cyclingRoadAnnotations)
+            mapView.addAnnotations(cyclingRoadLabelAnnotations)
+        }
+
+        func mapView(_ mapView: MLNMapView, viewFor annotation: MLNAnnotation) -> MLNAnnotationView? {
+            // ラベル用ポイントアノテーションのカスタムビュー
+            guard let pointAnnotation = annotation as? MLNPointAnnotation,
+                  cyclingRoadLabelAnnotations.contains(pointAnnotation) else {
+                return nil
+            }
+
+            let reuseID = "cycling-road-label"
+            var view = mapView.dequeueReusableAnnotationView(withIdentifier: reuseID)
+            if view == nil {
+                view = MLNAnnotationView(reuseIdentifier: reuseID)
+                view!.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
+            }
+
+            // 既存ラベルを除去して再生成
+            view!.subviews.forEach { $0.removeFromSuperview() }
+
+            let label = UILabel()
+            label.text = pointAnnotation.title ?? ""
+            label.font = .systemFont(ofSize: 11, weight: .medium)
+            label.textColor = .label
+            label.backgroundColor = UIColor.white.withAlphaComponent(0.5)
+            label.layer.cornerRadius = 3
+            label.clipsToBounds = true
+            label.textAlignment = .center
+            let insetPadding = UIEdgeInsets(top: 1, left: 4, bottom: 1, right: 4)
+            label.sizeToFit()
+            label.frame = label.frame.inset(by: UIEdgeInsets(
+                top: -insetPadding.top, left: -insetPadding.left,
+                bottom: -insetPadding.bottom, right: -insetPadding.right
+            ))
+            label.center = CGPoint(x: 0, y: -10)
+            view!.addSubview(label)
+
+            return view
         }
 
         // MARK: - Selected Route (server)
@@ -345,6 +495,40 @@ struct RindoMapView: UIViewRepresentable {
                 lineLayer.lineOpacity = NSExpression(forConstantValue: NSNumber(value: 0.6))
                 style.addLayer(lineLayer)
             }
+        }
+
+        // MARK: - Next Maneuver Pin (次の曲がり角マーカー)
+
+        private static let maneuverPinSourceID = "next-maneuver-pin"
+        private static let maneuverPinLayerID = "next-maneuver-pin-circle"
+        private static let maneuverPinPulseLayerID = "next-maneuver-pin-pulse"
+
+        private func applyNextManeuverPin(style: MLNStyle) {
+            removeLayer(style: style, layerID: Self.maneuverPinPulseLayerID)
+            removeLayer(style: style, layerID: Self.maneuverPinLayerID)
+            removeSource(style: style, sourceID: Self.maneuverPinSourceID)
+
+            guard navIsActive, let coord = nextManeuverCoord else { return }
+
+            let feature = MLNPointFeature()
+            feature.coordinate = coord
+            let source = MLNShapeSource(identifier: Self.maneuverPinSourceID, features: [feature])
+            style.addSource(source)
+
+            // 外側パルス（大きめの半透明サークル）
+            let pulse = MLNCircleStyleLayer(identifier: Self.maneuverPinPulseLayerID, source: source)
+            pulse.circleRadius = NSExpression(forConstantValue: NSNumber(value: 18))
+            pulse.circleColor = NSExpression(forConstantValue: UIColor.systemGreen)
+            pulse.circleOpacity = NSExpression(forConstantValue: NSNumber(value: 0.3))
+            style.addLayer(pulse)
+
+            // 内側ピン
+            let pin = MLNCircleStyleLayer(identifier: Self.maneuverPinLayerID, source: source)
+            pin.circleRadius = NSExpression(forConstantValue: NSNumber(value: 10))
+            pin.circleColor = NSExpression(forConstantValue: UIColor.systemGreen)
+            pin.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
+            pin.circleStrokeWidth = NSExpression(forConstantValue: NSNumber(value: 3))
+            style.addLayer(pin)
         }
 
         // MARK: - Helpers
