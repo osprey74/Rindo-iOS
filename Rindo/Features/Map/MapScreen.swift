@@ -70,6 +70,7 @@ struct MapScreen: View {
                 navigationCoordinates: navigationCoordinates,
                 locationService: locationService,
                 isNavigating: isNavigating,
+                nextManeuverCoordinate: navManager.currentManeuver?.coordinate,
                 recordedTrack: rideRecorder.isRecording ? rideRecorder.trackPoints : [],
                 cyclingRoads: cyclingRoads,
                 onCyclingRoadTapped: { road in selectCyclingRoad(road) }
@@ -448,6 +449,7 @@ struct MapScreen: View {
             locationService.startTracking()
         }
         isNavigating = true
+        UIApplication.shared.isIdleTimerDisabled = true
 
         // 走行モードの音声トリガ距離を適用
         navManager.voiceTriggerDistances = rideMode.voiceTriggerDistances
@@ -471,6 +473,7 @@ struct MapScreen: View {
         showSimpleNav = false
         navManager.stop()
         locationService.clearRoute()
+        UIApplication.shared.isIdleTimerDisabled = false
         if !rideRecorder.isRecording {
             locationService.stopTracking()
         }

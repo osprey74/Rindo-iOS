@@ -36,9 +36,9 @@ enum RideMode: String, CaseIterable, Identifiable {
     /// ナビ開始時のデフォルトズームレベル
     var navZoomLevel: Double {
         switch self {
-        case .commute:  16
-        case .leisure:  15
-        case .training: 17
+        case .commute:  18
+        case .leisure:  17
+        case .training: 19
         }
     }
 

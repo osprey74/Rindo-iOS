@@ -12,6 +12,7 @@ struct RindoMapView: UIViewRepresentable {
     var navigationCoordinates: [CLLocationCoordinate2D]
     var locationService: LocationService
     var isNavigating: Bool
+    var nextManeuverCoordinate: CLLocationCoordinate2D?
     // 走行軌跡
     var recordedTrack: [RideRecorder.RecordedTrackPoint]
 
@@ -34,6 +35,7 @@ struct RindoMapView: UIViewRepresentable {
         mapView.showsUserLocation = true
         mapView.delegate = context.coordinator
         mapView.allowsRotating = false
+        mapView.allowsTilting = false
 
         // 地点マーカータップ用ジェスチャ
         let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleMapTap(_:)))
@@ -58,23 +60,35 @@ struct RindoMapView: UIViewRepresentable {
             course: locationService.course,
             isNavigating: isNavigating,
             recordedTrack: recordedTrack,
-            cyclingRoads: cyclingRoads
+            cyclingRoads: cyclingRoads,
+            nextManeuverCoordinate: nextManeuverCoordinate
         )
         if let coord = focusCoordinate {
             let zoom = focusZoomLevel ?? 15
             mapView.setCenter(coord, zoomLevel: zoom, animated: true)
         }
 
-        // ナビ中は現在地を画面下 1/3 に追従表示
+        // ナビ中は現在地を画面下 1/3 に追従表示 + ヘッドアップ
         if isNavigating, let loc = locationService.currentLocation {
+            let course = locationService.course
+            // ヘッドアップ: 進行方向を上にする（course が有効な場合のみ）
+            if course >= 0 {
+                mapView.direction = course
+            }
+
             let coord = loc.coordinate
             let mapHeight = mapView.frame.height
-            // 現在地を画面下 1/3 に配置するため、画面中心を北方向にオフセット
+            // 現在地を画面下 1/3 に配置するため、画面中心を進行方向前方にオフセット
             let offsetY = mapHeight / 6
             let centerPoint = mapView.convert(coord, toPointTo: mapView)
             let adjustedPoint = CGPoint(x: centerPoint.x, y: centerPoint.y - offsetY)
             let adjustedCoord = mapView.convert(adjustedPoint, toCoordinateFrom: mapView)
             mapView.setCenter(adjustedCoord, animated: true)
+        } else {
+            // ナビ終了時はノースアップに戻す
+            if mapView.direction != 0 {
+                mapView.direction = 0
+            }
         }
     }
 
@@ -92,6 +106,7 @@ struct RindoMapView: UIViewRepresentable {
         private var navCourse: Double = 0
         private var navIsActive = false
         private var trackPoints: [RideRecorder.RecordedTrackPoint] = []
+        private var nextManeuverCoord: CLLocationCoordinate2D?
 
         // キュレーションサイクリングロード（アノテーション方式 — タイル変換を迂回）
         private var cyclingRoadAnnotations: [MLNPolyline] = []
@@ -114,7 +129,8 @@ struct RindoMapView: UIViewRepresentable {
             course: Double,
             isNavigating: Bool,
             recordedTrack: [RideRecorder.RecordedTrackPoint],
-            cyclingRoads: [CyclingRoadFeature]
+            cyclingRoads: [CyclingRoadFeature],
+            nextManeuverCoordinate: CLLocationCoordinate2D?
         ) {
             currentRoute = selectedRoute
             currentLocations = savedLocations
@@ -123,6 +139,7 @@ struct RindoMapView: UIViewRepresentable {
             navLocation = currentLocation
             navCourse = course
             navIsActive = isNavigating
+            nextManeuverCoord = nextManeuverCoordinate
             // サイクリングロードアノテーションの追加（初回のみ）
             if cyclingRoads.count != cyclingRoadFeatures.count {
                 cyclingRoadFeatures = cyclingRoads
@@ -209,6 +226,7 @@ struct RindoMapView: UIViewRepresentable {
             applyLocationMarkers(style: style)
             applyTrackLayer(style: style)
             applyNavigationLayers(style: style)
+            applyNextManeuverPin(style: style)
         }
 
         // MARK: - Curated Cycling Roads (Annotation-based)
@@ -477,6 +495,40 @@ struct RindoMapView: UIViewRepresentable {
                 lineLayer.lineOpacity = NSExpression(forConstantValue: NSNumber(value: 0.6))
                 style.addLayer(lineLayer)
             }
+        }
+
+        // MARK: - Next Maneuver Pin (次の曲がり角マーカー)
+
+        private static let maneuverPinSourceID = "next-maneuver-pin"
+        private static let maneuverPinLayerID = "next-maneuver-pin-circle"
+        private static let maneuverPinPulseLayerID = "next-maneuver-pin-pulse"
+
+        private func applyNextManeuverPin(style: MLNStyle) {
+            removeLayer(style: style, layerID: Self.maneuverPinPulseLayerID)
+            removeLayer(style: style, layerID: Self.maneuverPinLayerID)
+            removeSource(style: style, sourceID: Self.maneuverPinSourceID)
+
+            guard navIsActive, let coord = nextManeuverCoord else { return }
+
+            let feature = MLNPointFeature()
+            feature.coordinate = coord
+            let source = MLNShapeSource(identifier: Self.maneuverPinSourceID, features: [feature])
+            style.addSource(source)
+
+            // 外側パルス（大きめの半透明サークル）
+            let pulse = MLNCircleStyleLayer(identifier: Self.maneuverPinPulseLayerID, source: source)
+            pulse.circleRadius = NSExpression(forConstantValue: NSNumber(value: 18))
+            pulse.circleColor = NSExpression(forConstantValue: UIColor.systemGreen)
+            pulse.circleOpacity = NSExpression(forConstantValue: NSNumber(value: 0.3))
+            style.addLayer(pulse)
+
+            // 内側ピン
+            let pin = MLNCircleStyleLayer(identifier: Self.maneuverPinLayerID, source: source)
+            pin.circleRadius = NSExpression(forConstantValue: NSNumber(value: 10))
+            pin.circleColor = NSExpression(forConstantValue: UIColor.systemGreen)
+            pin.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
+            pin.circleStrokeWidth = NSExpression(forConstantValue: NSNumber(value: 3))
+            style.addLayer(pin)
         }
 
         // MARK: - Helpers
