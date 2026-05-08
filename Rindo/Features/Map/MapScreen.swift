@@ -50,6 +50,9 @@ struct MapScreen: View {
     @AppStorage("breakIntervalMinutes") private var breakIntervalMinutes = 60
     @AppStorage("refuelIntervalKm") private var refuelIntervalKm = 50.0
 
+    // 地点ポップオーバー
+    @State private var selectedLocation: SavedLocation?
+
     // サイクリングロード
     @State private var cyclingRoads: [CyclingRoadFeature] = []
     @State private var selectedCyclingRoad: CyclingRoadFeature?
@@ -73,7 +76,11 @@ struct MapScreen: View {
                 nextManeuverCoordinate: navManager.currentManeuver?.coordinate,
                 recordedTrack: rideRecorder.isRecording ? rideRecorder.trackPoints : [],
                 cyclingRoads: cyclingRoads,
-                onCyclingRoadTapped: { road in selectCyclingRoad(road) }
+                onCyclingRoadTapped: { road in selectCyclingRoad(road) },
+                onLocationTapped: { location in
+                    selectedLocation = location
+                    applyFocus(location.coordinate)
+                }
             )
             .ignoresSafeArea()
 
@@ -108,6 +115,14 @@ struct MapScreen: View {
                         remainingTimeSeconds: navManager.remainingTimeSeconds,
                         isRerouting: navManager.isRerouting
                     )
+                }
+
+                // 地点ポップオーバー
+                if let location = selectedLocation {
+                    LocationPopover(location: location) {
+                        withAnimation { selectedLocation = nil }
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
                 // ルート情報バー（ナビ中は非表示）
@@ -183,9 +198,18 @@ struct MapScreen: View {
             .environment(auth)
         }
         .task {
+            // セッション復元を待ってから読み込み（トークンが APIClient にセットされた後）
+            await auth.restoreSession()
             await loadAllLayers()
             setupDeviationFeedback()
             setupNavLocationUpdates()
+        }
+        .onChange(of: auth.isAuthenticated) { _, isAuth in
+            if isAuth {
+                Task { await loadLocations() }
+            } else {
+                savedLocations = []
+            }
         }
     }
 

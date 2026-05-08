@@ -10,7 +10,6 @@ struct RindoApp: App {
             MapScreen()
                 .environment(auth)
                 .task {
-                    await auth.restoreSession()
                     ReminderManager.requestPermissionIfNeeded()
                 }
         }

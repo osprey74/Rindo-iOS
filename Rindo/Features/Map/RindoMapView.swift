@@ -19,9 +19,10 @@ struct RindoMapView: UIViewRepresentable {
     // キュレーションサイクリングロード
     var cyclingRoads: [CyclingRoadFeature] = []
     var onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)?
+    var onLocationTapped: ((SavedLocation) -> Void)?
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onCyclingRoadTapped: onCyclingRoadTapped)
+        Coordinator(onCyclingRoadTapped: onCyclingRoadTapped, onLocationTapped: onLocationTapped)
     }
 
     func makeUIView(context: Context) -> MLNMapView {
@@ -37,20 +38,12 @@ struct RindoMapView: UIViewRepresentable {
         mapView.allowsRotating = false
         mapView.allowsTilting = false
 
-        // 地点マーカータップ用ジェスチャ
-        let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleMapTap(_:)))
-        for gesture in mapView.gestureRecognizers ?? [] {
-            if let existing = gesture as? UITapGestureRecognizer {
-                tap.require(toFail: existing)
-            }
-        }
-        mapView.addGestureRecognizer(tap)
-
         return mapView
     }
 
     func updateUIView(_ mapView: MLNMapView, context: Context) {
         context.coordinator.onCyclingRoadTapped = onCyclingRoadTapped
+        context.coordinator.onLocationTapped = onLocationTapped
         context.coordinator.update(
             mapView: mapView,
             selectedRoute: selectedRoute,
@@ -108,15 +101,21 @@ struct RindoMapView: UIViewRepresentable {
         private var trackPoints: [RideRecorder.RecordedTrackPoint] = []
         private var nextManeuverCoord: CLLocationCoordinate2D?
 
+        // 地点マーカー（アノテーション方式）
+        private var locationAnnotations: [MLNPointAnnotation] = []
+        private var annotationToLocation: [ObjectIdentifier: SavedLocation] = [:]
+
         // キュレーションサイクリングロード（アノテーション方式 — タイル変換を迂回）
         private var cyclingRoadAnnotations: [MLNPolyline] = []
         private var cyclingRoadLabelAnnotations: [MLNPointAnnotation] = []
         private var annotationToRoad: [ObjectIdentifier: CyclingRoadFeature] = [:]
         private var cyclingRoadFeatures: [CyclingRoadFeature] = []
         var onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)?
+        var onLocationTapped: ((SavedLocation) -> Void)?
 
-        init(onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)? = nil) {
+        init(onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)? = nil, onLocationTapped: ((SavedLocation) -> Void)? = nil) {
             self.onCyclingRoadTapped = onCyclingRoadTapped
+            self.onLocationTapped = onLocationTapped
             super.init()
         }
 
@@ -146,6 +145,9 @@ struct RindoMapView: UIViewRepresentable {
                 applyCuratedRoadAnnotations(to: mapView)
             }
 
+            // 地点マーカー（アノテーション方式、スタイル不要）
+            applyLocationMarkers(to: mapView)
+
             guard styleLoaded else { return }
             applyAllLayers(to: mapView)
         }
@@ -158,39 +160,19 @@ struct RindoMapView: UIViewRepresentable {
                let road = annotationToRoad[ObjectIdentifier(polyline)] {
                 onCyclingRoadTapped?(road)
                 mapView.deselectAnnotation(annotation, animated: false)
-            }
-        }
-
-        @objc func handleMapTap(_ sender: UITapGestureRecognizer) {
-            guard let mapView = sender.view as? MLNMapView else { return }
-            let point = sender.location(in: mapView)
-
-            // 地点マーカーレイヤーをタップ判定
-            let features = mapView.visibleFeatures(
-                at: point,
-                styleLayerIdentifiers: [Self.locationLayerID]
-            )
-            guard let feature = features.first,
-                  let name = feature.attribute(forKey: "name") as? String else {
-                // ポップアップ外タップで閉じる
-                mapView.deselectAnnotation(mapView.selectedAnnotations.first, animated: true)
                 return
             }
 
-            let emoji = feature.attribute(forKey: "emoji") as? String ?? "📍"
-            let coordinate = feature.coordinate
-
-            // ポップアップ表示
-            let annotation = MLNPointAnnotation()
-            annotation.coordinate = coordinate
-            annotation.title = "\(emoji) \(name)"
-            annotation.subtitle = feature.attribute(forKey: "notes") as? String
-            mapView.selectAnnotation(annotation, animated: true, completionHandler: nil)
+            // 地点アノテーションのタップ
+            if let point = annotation as? MLNPointAnnotation,
+               let location = annotationToLocation[ObjectIdentifier(point)] {
+                onLocationTapped?(location)
+                mapView.deselectAnnotation(annotation, animated: false)
+            }
         }
 
         func mapView(_ mapView: MLNMapView, annotationCanShowCallout annotation: MLNAnnotation) -> Bool {
-            // ポリラインはコールアウト不要（詳細カードで表示）
-            annotation is MLNPointAnnotation
+            false
         }
 
         // MARK: - Annotation Styling
@@ -223,7 +205,6 @@ struct RindoMapView: UIViewRepresentable {
         private func applyAllLayers(to mapView: MLNMapView) {
             guard let style = mapView.style else { return }
             applyRouteLayer(style: style, mapView: mapView)
-            applyLocationMarkers(style: style)
             applyTrackLayer(style: style)
             applyNavigationLayers(style: style)
             applyNextManeuverPin(style: style)
@@ -275,40 +256,73 @@ struct RindoMapView: UIViewRepresentable {
         }
 
         func mapView(_ mapView: MLNMapView, viewFor annotation: MLNAnnotation) -> MLNAnnotationView? {
-            // ラベル用ポイントアノテーションのカスタムビュー
-            guard let pointAnnotation = annotation as? MLNPointAnnotation,
-                  cyclingRoadLabelAnnotations.contains(pointAnnotation) else {
+            guard let pointAnnotation = annotation as? MLNPointAnnotation else {
                 return nil
             }
 
-            let reuseID = "cycling-road-label"
-            var view = mapView.dequeueReusableAnnotationView(withIdentifier: reuseID)
-            if view == nil {
-                view = MLNAnnotationView(reuseIdentifier: reuseID)
-                view!.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
+            // 地点マーカー（カテゴリ別 emoji アイコン）
+            if let location = annotationToLocation[ObjectIdentifier(pointAnnotation)] {
+                let size: CGFloat = 36
+                let reuseID = "location-\(location.category.rawValue)"
+                var view = mapView.dequeueReusableAnnotationView(withIdentifier: reuseID)
+                if view == nil {
+                    view = MLNAnnotationView(reuseIdentifier: reuseID)
+                    view!.frame = CGRect(x: 0, y: 0, width: size, height: size)
+                    view!.centerOffset = CGVector(dx: 0, dy: 0)
+                }
+                view!.subviews.forEach { $0.removeFromSuperview() }
+
+                let bg = UIView(frame: CGRect(x: 0, y: 0, width: size, height: size))
+                bg.backgroundColor = location.category.markerUIColor
+                bg.layer.cornerRadius = size / 2
+                bg.layer.borderColor = UIColor.white.cgColor
+                bg.layer.borderWidth = 2.5
+                bg.layer.shadowColor = UIColor.black.cgColor
+                bg.layer.shadowOffset = CGSize(width: 0, height: 2)
+                bg.layer.shadowRadius = 3
+                bg.layer.shadowOpacity = 0.3
+
+                let emoji = UILabel(frame: bg.bounds)
+                emoji.text = location.category.emoji
+                emoji.font = .systemFont(ofSize: 20)
+                emoji.textAlignment = .center
+                bg.addSubview(emoji)
+
+                view!.addSubview(bg)
+                view!.isEnabled = true
+                return view
             }
 
-            // 既存ラベルを除去して再生成
-            view!.subviews.forEach { $0.removeFromSuperview() }
+            // サイクリングロードラベル
+            if cyclingRoadLabelAnnotations.contains(pointAnnotation) {
+                let reuseID = "cycling-road-label"
+                var view = mapView.dequeueReusableAnnotationView(withIdentifier: reuseID)
+                if view == nil {
+                    view = MLNAnnotationView(reuseIdentifier: reuseID)
+                    view!.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
+                }
+                view!.subviews.forEach { $0.removeFromSuperview() }
 
-            let label = UILabel()
-            label.text = pointAnnotation.title ?? ""
-            label.font = .systemFont(ofSize: 11, weight: .medium)
-            label.textColor = .label
-            label.backgroundColor = UIColor.white.withAlphaComponent(0.5)
-            label.layer.cornerRadius = 3
-            label.clipsToBounds = true
-            label.textAlignment = .center
-            let insetPadding = UIEdgeInsets(top: 1, left: 4, bottom: 1, right: 4)
-            label.sizeToFit()
-            label.frame = label.frame.inset(by: UIEdgeInsets(
-                top: -insetPadding.top, left: -insetPadding.left,
-                bottom: -insetPadding.bottom, right: -insetPadding.right
-            ))
-            label.center = CGPoint(x: 0, y: -10)
-            view!.addSubview(label)
+                let label = UILabel()
+                label.text = pointAnnotation.title ?? ""
+                label.font = .systemFont(ofSize: 11, weight: .medium)
+                label.textColor = .label
+                label.backgroundColor = UIColor.white.withAlphaComponent(0.5)
+                label.layer.cornerRadius = 3
+                label.clipsToBounds = true
+                label.textAlignment = .center
+                let insetPadding = UIEdgeInsets(top: 1, left: 4, bottom: 1, right: 4)
+                label.sizeToFit()
+                label.frame = label.frame.inset(by: UIEdgeInsets(
+                    top: -insetPadding.top, left: -insetPadding.left,
+                    bottom: -insetPadding.bottom, right: -insetPadding.right
+                ))
+                label.center = CGPoint(x: 0, y: -10)
+                view!.addSubview(label)
+                return view
+            }
 
-            return view
+            return nil
         }
 
         // MARK: - Selected Route (server)
@@ -393,37 +407,35 @@ struct RindoMapView: UIViewRepresentable {
             mapView.setCamera(camera, animated: true)
         }
 
-        // MARK: - Location Markers
+        // MARK: - Location Markers (Annotation-based)
 
-        private static let locationSourceID = "saved-locations"
         private static let locationLayerID = "saved-locations-circles"
-        private static let locationLabelLayerID = "saved-locations-labels"
 
-        private func applyLocationMarkers(style: MLNStyle) {
-            removeLayer(style: style, layerID: Self.locationLabelLayerID)
-            removeLayer(style: style, layerID: Self.locationLayerID)
-            removeSource(style: style, sourceID: Self.locationSourceID)
-            guard !currentLocations.isEmpty else { return }
-            let features: [MLNPointFeature] = currentLocations.map { loc in
-                let f = MLNPointFeature()
-                f.coordinate = loc.coordinate
-                f.attributes = ["name": loc.name, "category": loc.category.rawValue, "emoji": loc.category.emoji]
-                return f
+        private func applyLocationMarkers(to mapView: MLNMapView) {
+            // 変更がなければスキップ
+            let currentIds = Set(currentLocations.map(\.id))
+            let existingIds = Set(annotationToLocation.values.map(\.id))
+            guard currentIds != existingIds else { return }
+
+            // 既存アノテーションを除去
+            if !locationAnnotations.isEmpty {
+                mapView.removeAnnotations(locationAnnotations)
+                locationAnnotations.removeAll()
+                annotationToLocation.removeAll()
             }
-            let source = MLNShapeSource(identifier: Self.locationSourceID, features: features)
-            style.addSource(source)
-            let circle = MLNCircleStyleLayer(identifier: Self.locationLayerID, source: source)
-            circle.circleRadius = NSExpression(forConstantValue: NSNumber(value: 12))
-            circle.circleColor = NSExpression(forConstantValue: UIColor.systemOrange)
-            circle.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
-            circle.circleStrokeWidth = NSExpression(forConstantValue: NSNumber(value: 2))
-            circle.circleOpacity = NSExpression(forConstantValue: NSNumber(value: 0.9))
-            style.addLayer(circle)
-            let label = MLNSymbolStyleLayer(identifier: Self.locationLabelLayerID, source: source)
-            label.text = NSExpression(forKeyPath: "emoji")
-            label.textOffset = NSExpression(forConstantValue: NSValue(cgVector: CGVector(dx: 0, dy: -1.8)))
-            label.textAllowsOverlap = NSExpression(forConstantValue: true)
-            style.addLayer(label)
+
+            guard !currentLocations.isEmpty else { return }
+
+            for loc in currentLocations {
+                let pin = MLNPointAnnotation()
+                pin.coordinate = loc.coordinate
+                pin.title = "\(loc.category.emoji) \(loc.name)"
+                pin.subtitle = loc.notes
+                locationAnnotations.append(pin)
+                annotationToLocation[ObjectIdentifier(pin)] = loc
+            }
+
+            mapView.addAnnotations(locationAnnotations)
         }
 
         // MARK: - Recorded Track (breadcrumb trail)

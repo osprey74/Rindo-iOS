@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import UIKit
 
 struct LocationsResponse: Codable, Sendable {
     let locations: [SavedLocation]
@@ -46,6 +47,15 @@ enum LocationCategory: String, Codable, Sendable, CaseIterable {
         case .work: "#7B68EE"
         case .favorite: "#FFD700"
         case .other: "#888888"
+        }
+    }
+
+    var markerUIColor: UIColor {
+        switch self {
+        case .home: UIColor.systemBlue
+        case .work: UIColor.systemPurple
+        case .favorite: UIColor.systemYellow
+        case .other: UIColor.systemGray
         }
     }
 }

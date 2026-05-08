@@ -21,6 +21,7 @@
 		588E5ADDDC04A192F5E53ECB /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F83028F5261926B98208F5A6 /* KeychainStore.swift */; };
 		5A0221F62EDCF5FE52413E5A /* ElevationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8124F62BA1F39CA06E0856F3 /* ElevationService.swift */; };
 		5C914F348E476B09A018CD77 /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = 4014E81F7ECF771C2CCBB096 /* MapLibre */; };
+		5D01B929F3DAC18F11A8AD58 /* LocationPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35360F9D189997ADEC1FB6A0 /* LocationPopover.swift */; };
 		5DC4418FADACDD1B7F7DA8DE /* CyclingRoad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71405504155574B612FA0518 /* CyclingRoad.swift */; };
 		6486B6C8DDC6FD2A3F67D93D /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E95BD14DF26654CDD9E622B9 /* AuthService.swift */; };
 		6A70778E5A39F37BD3D81140 /* GPXParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B2DE7731FF35FF14D423B4 /* GPXParser.swift */; };
@@ -75,6 +76,7 @@
 		27D637225DF76267C253FE4E /* ImportedRoutesPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedRoutesPanel.swift; sourceTree = "<group>"; };
 		2EA1887C3B7D6F5431D37B68 /* CyclingRoadDetailCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyclingRoadDetailCard.swift; sourceTree = "<group>"; };
 		32B76B8124466E1A7074EBFB /* ImportedRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedRoute.swift; sourceTree = "<group>"; };
+		35360F9D189997ADEC1FB6A0 /* LocationPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPopover.swift; sourceTree = "<group>"; };
 		3BAF57B3E3CC0F0B8446A3B5 /* VoiceGuide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceGuide.swift; sourceTree = "<group>"; };
 		3FAF34924EC1D7D51E8ED219 /* ReminderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderManager.swift; sourceTree = "<group>"; };
 		4426995F5955659EEDDC9674 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -351,6 +353,7 @@
 		C2324EA736E39FD6D238BD11 /* Locations */ = {
 			isa = PBXGroup;
 			children = (
+				35360F9D189997ADEC1FB6A0 /* LocationPopover.swift */,
 				EDC2258D014E2B1876445AA2 /* SavedLocationsPanel.swift */,
 			);
 			path = Locations;
@@ -500,6 +503,7 @@
 				DB9321C37D5A648B88DC9FAE /* ImportedRoute.swift in Sources */,
 				7CEE0433DF32E97C4D244BB3 /* ImportedRoutesPanel.swift in Sources */,
 				588E5ADDDC04A192F5E53ECB /* KeychainStore.swift in Sources */,
+				5D01B929F3DAC18F11A8AD58 /* LocationPopover.swift in Sources */,
 				E92862C8C533F54008FDD2C7 /* LocationService.swift in Sources */,
 				151885C59AB91AA43C72728A /* LoginView.swift in Sources */,
 				1CC97E82F5B293E835AE54FB /* ManeuverParser.swift in Sources */,

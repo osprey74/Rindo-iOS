@@ -8,6 +8,7 @@ final class AuthService {
     private(set) var token: String?
     private(set) var user: User?
     private(set) var isLoading = false
+    private var sessionRestored = false
 
     var isAuthenticated: Bool { token != nil }
 
@@ -49,6 +50,8 @@ final class AuthService {
 
     /// 起動時に Keychain のトークンを検証
     func restoreSession() async {
+        guard !sessionRestored else { return }
+        sessionRestored = true
         guard let savedToken = token else { return }
         await APIClient.shared.setToken(savedToken)
         do {
