@@ -501,6 +501,14 @@ struct MapScreen: View {
         if !rideRecorder.isRecording {
             locationService.stopTracking()
         }
+
+        // ルート選択状態をクリア（他のルートをタップ可能にする）
+        selectedRoute = nil
+        activeImportedRoute = nil
+        navigationCoordinates = []
+        valhallaRoute = nil
+        elevationProfile = nil
+        focusCoordinate = nil
     }
 
     private func setupDeviationFeedback() {
