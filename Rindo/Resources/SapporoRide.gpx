@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<gpx version="1.1" creator="Rindo">
+  <!-- 札幌駅 → 大通公園 → 中島公園 を約20km/hで走行するシミュレーション -->
+  <trk>
+    <name>Sapporo Demo Ride</name>
+    <trkseg>
+      <!-- 札幌駅前 -->
+      <trkpt lat="43.06860" lon="141.35080"><time>2026-06-06T10:00:00Z</time></trkpt>
+      <trkpt lat="43.06810" lon="141.35090"><time>2026-06-06T10:00:03Z</time></trkpt>
+      <trkpt lat="43.06750" lon="141.35100"><time>2026-06-06T10:00:06Z</time></trkpt>
+      <trkpt lat="43.06690" lon="141.35110"><time>2026-06-06T10:00:09Z</time></trkpt>
+      <trkpt lat="43.06630" lon="141.35120"><time>2026-06-06T10:00:12Z</time></trkpt>
+      <trkpt lat="43.06570" lon="141.35130"><time>2026-06-06T10:00:15Z</time></trkpt>
+      <trkpt lat="43.06510" lon="141.35150"><time>2026-06-06T10:00:18Z</time></trkpt>
+      <trkpt lat="43.06450" lon="141.35170"><time>2026-06-06T10:00:21Z</time></trkpt>
+      <trkpt lat="43.06390" lon="141.35200"><time>2026-06-06T10:00:24Z</time></trkpt>
+      <trkpt lat="43.06330" lon="141.35230"><time>2026-06-06T10:00:27Z</time></trkpt>
+      <!-- 北5条手稲通を東へ -->
+      <trkpt lat="43.06280" lon="141.35280"><time>2026-06-06T10:00:30Z</time></trkpt>
+      <trkpt lat="43.06230" lon="141.35340"><time>2026-06-06T10:00:33Z</time></trkpt>
+      <trkpt lat="43.06180" lon="141.35400"><time>2026-06-06T10:00:36Z</time></trkpt>
+      <trkpt lat="43.06130" lon="141.35460"><time>2026-06-06T10:00:39Z</time></trkpt>
+      <trkpt lat="43.06080" lon="141.35520"><time>2026-06-06T10:00:42Z</time></trkpt>
+      <trkpt lat="43.06030" lon="141.35580"><time>2026-06-06T10:00:45Z</time></trkpt>
+      <!-- 大通公園付近 -->
+      <trkpt lat="43.05980" lon="141.35630"><time>2026-06-06T10:00:48Z</time></trkpt>
+      <trkpt lat="43.05930" lon="141.35630"><time>2026-06-06T10:00:51Z</time></trkpt>
+      <trkpt lat="43.05880" lon="141.35630"><time>2026-06-06T10:00:54Z</time></trkpt>
+      <trkpt lat="43.05830" lon="141.35630"><time>2026-06-06T10:00:57Z</time></trkpt>
+      <trkpt lat="43.05780" lon="141.35630"><time>2026-06-06T10:01:00Z</time></trkpt>
+      <trkpt lat="43.05730" lon="141.35630"><time>2026-06-06T10:01:03Z</time></trkpt>
+      <!-- 南へ（中島公園方面） -->
+      <trkpt lat="43.05670" lon="141.35630"><time>2026-06-06T10:01:06Z</time></trkpt>
+      <trkpt lat="43.05610" lon="141.35630"><time>2026-06-06T10:01:09Z</time></trkpt>
+      <trkpt lat="43.05550" lon="141.35630"><time>2026-06-06T10:01:12Z</time></trkpt>
+      <trkpt lat="43.05490" lon="141.35620"><time>2026-06-06T10:01:15Z</time></trkpt>
+      <trkpt lat="43.05430" lon="141.35610"><time>2026-06-06T10:01:18Z</time></trkpt>
+      <trkpt lat="43.05370" lon="141.35600"><time>2026-06-06T10:01:21Z</time></trkpt>
+      <trkpt lat="43.05310" lon="141.35590"><time>2026-06-06T10:01:24Z</time></trkpt>
+      <trkpt lat="43.05250" lon="141.35580"><time>2026-06-06T10:01:27Z</time></trkpt>
+      <trkpt lat="43.05190" lon="141.35570"><time>2026-06-06T10:01:30Z</time></trkpt>
+      <trkpt lat="43.05130" lon="141.35560"><time>2026-06-06T10:01:33Z</time></trkpt>
+      <trkpt lat="43.05070" lon="141.35550"><time>2026-06-06T10:01:36Z</time></trkpt>
+      <trkpt lat="43.05010" lon="141.35540"><time>2026-06-06T10:01:39Z</time></trkpt>
+      <trkpt lat="43.04950" lon="141.35530"><time>2026-06-06T10:01:42Z</time></trkpt>
+      <trkpt lat="43.04890" lon="141.35520"><time>2026-06-06T10:01:45Z</time></trkpt>
+      <!-- 中島公園付近 -->
+      <trkpt lat="43.04830" lon="141.35510"><time>2026-06-06T10:01:48Z</time></trkpt>
+      <trkpt lat="43.04770" lon="141.35500"><time>2026-06-06T10:01:51Z</time></trkpt>
+      <trkpt lat="43.04710" lon="141.35490"><time>2026-06-06T10:01:54Z</time></trkpt>
+      <trkpt lat="43.04650" lon="141.35480"><time>2026-06-06T10:01:57Z</time></trkpt>
+      <trkpt lat="43.04590" lon="141.35470"><time>2026-06-06T10:02:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

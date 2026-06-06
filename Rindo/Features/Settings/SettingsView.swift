@@ -14,6 +14,17 @@ struct SettingsView: View {
     @AppStorage("breakIntervalMinutes") private var breakIntervalMinutes = 60
     @AppStorage("refuelIntervalKm") private var refuelIntervalKm = 50.0
 
+    // ルーティング
+    @AppStorage("routingMode") private var routingMode = "apple"
+    @AppStorage("valhallaServerURL") private var valhallaServerURL = ""
+    @State private var isTestingConnection = false
+    @State private var connectionTestResult: ConnectionTestResult?
+
+    private enum ConnectionTestResult {
+        case success
+        case failure(String)
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -30,6 +41,66 @@ struct SettingsView: View {
                 } footer: {
                     if let mode = RideMode(rawValue: rideModeRaw) {
                         Text(mode.description)
+                    }
+                }
+
+                // ルーティング
+                Section {
+                    Picker("ルーティングエンジン", selection: $routingMode) {
+                        Label("標準（Apple Maps）", systemImage: "map")
+                            .tag("apple")
+                        Label("Valhalla（自転車専用）", systemImage: "bicycle")
+                            .tag("valhalla")
+                    }
+                    .pickerStyle(.inline)
+
+                    if routingMode == "valhalla" {
+                        TextField("サーバー URL", text: $valhallaServerURL)
+                            .keyboardType(.URL)
+                            .textContentType(.URL)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+
+                        Button {
+                            Task { await testValhallaConnection() }
+                        } label: {
+                            HStack {
+                                Label("接続テスト", systemImage: "antenna.radiowaves.left.and.right")
+                                Spacer()
+                                if isTestingConnection {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else if let result = connectionTestResult {
+                                    switch result {
+                                    case .success:
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.green)
+                                    case .failure:
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.red)
+                                    }
+                                }
+                            }
+                        }
+                        .disabled(valhallaServerURL.isEmpty || isTestingConnection)
+
+                        if case .failure(let message) = connectionTestResult {
+                            Text(message)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+
+                        Link(destination: URL(string: "https://github.com/user/Rindo-iOS/blob/main/docs/valhalla-setup.md")!) {
+                            Label("Valhalla サーバーの構築手順", systemImage: "doc.text")
+                        }
+                    }
+                } header: {
+                    Text("ルーティング")
+                } footer: {
+                    if routingMode == "apple" {
+                        Text("標準モードは徒歩ルートを自転車速度に換算してナビゲーションします")
+                    } else {
+                        Text("自転車専用ルーティングには Valhalla サーバーが必要です")
                     }
                 }
 
@@ -161,6 +232,28 @@ struct SettingsView: View {
                     Button("閉じる") { dismiss() }
                 }
             }
+        }
+    }
+
+    private func testValhallaConnection() async {
+        isTestingConnection = true
+        connectionTestResult = nil
+        defer { isTestingConnection = false }
+
+        guard let baseURL = URL(string: valhallaServerURL) else {
+            connectionTestResult = .failure("無効な URL です")
+            return
+        }
+
+        // 札幌駅→大通公園の短距離テストルートをリクエスト
+        do {
+            let provider = ValhallaRouteProvider(baseURL: baseURL)
+            let sapporoStation = CLLocationCoordinate2D(latitude: 43.0686, longitude: 141.3508)
+            let odoriPark = CLLocationCoordinate2D(latitude: 43.0597, longitude: 141.3563)
+            _ = try await provider.fetchRoute(from: sapporoStation, to: odoriPark)
+            connectionTestResult = .success
+        } catch {
+            connectionTestResult = .failure(error.localizedDescription)
         }
     }
 

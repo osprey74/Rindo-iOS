@@ -53,16 +53,15 @@ final class NavigationManager {
         arrivalThresholdM = route.totalDistanceKm * 1000 * 0.5
         voiceGuide.reset()
 
-        // 開始音声
-        if let first = currentManeuver {
-            voiceGuide.speak(first.voiceInstruction, key: "start")
-        }
+        // 開始音声: ルート概要のみ（最初のマニューバは猶予後に距離トリガーで案内）
+        let summary = startSummary(route: route)
+        voiceGuide.speak(summary + "ナビゲーションを開始します。", key: "start")
     }
 
     func stop() {
         isActive = false
         route = nil
-        voiceGuide.stop()
+        voiceGuide.reset()
     }
 
     // MARK: - Location Update
@@ -104,6 +103,18 @@ final class NavigationManager {
     }
 
     // MARK: - Private
+
+    /// ナビ開始時の概要読み上げ（例: "目的地まで3.2キロメートル、約12分。"）
+    private func startSummary(route: NavigationRoute) -> String {
+        let distText: String
+        if route.totalDistanceKm < 1 {
+            distText = "\(Int(route.totalDistanceKm * 1000))メートル"
+        } else {
+            distText = String(format: "%.1fキロメートル", route.totalDistanceKm)
+        }
+        let minutes = Int(route.totalTimeSeconds / 60)
+        return "目的地まで\(distText)、約\(minutes)分。"
+    }
 
     private func findFirstNonStartManeuver() -> Int {
         guard let route else { return 0 }
@@ -163,6 +174,9 @@ final class NavigationManager {
     }
 
     private func triggerVoiceIfNeeded(maneuver: NavigationManeuver, distanceM: Double) {
+        // 発話中はトリガを抑制（開始音声やリルート音声との重複防止）
+        if voiceGuide.isSpeaking { return }
+
         for threshold in voiceTriggerDistances {
             if distanceM <= threshold {
                 let key = "m\(currentManeuverIndex)_\(Int(threshold))m"

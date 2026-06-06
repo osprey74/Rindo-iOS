@@ -59,8 +59,26 @@ struct MapScreen: View {
     @State private var cyclingRoadElevation: ElevationProfile?
     @State private var isLoadingCyclingRoadElevation = false
 
+    // 目的地（ロングプレスで設定）
+    @State private var destinationCoordinate: CLLocationCoordinate2D?
+    @State private var isLoadingRoute = false
+
+    // ルーティングモード設定
+    @AppStorage("routingMode") private var routingMode = "apple"
+    @AppStorage("valhallaServerURL") private var valhallaServerURL = ""
+
     // エラー
     @State private var errorMessage: String?
+
+    /// 現在のルーティング設定に基づくプロバイダを返す
+    private var routeProvider: any RouteProvider {
+        if routingMode == "valhalla",
+           !valhallaServerURL.isEmpty,
+           let url = URL(string: valhallaServerURL) {
+            return ValhallaRouteProvider(baseURL: url)
+        }
+        return AppleRouteProvider()
+    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -80,7 +98,9 @@ struct MapScreen: View {
                 onLocationTapped: { location in
                     selectedLocation = location
                     applyFocus(location.coordinate)
-                }
+                },
+                destinationCoordinate: destinationCoordinate,
+                onDestinationSet: { coord in setDestination(coord) }
             )
             .ignoresSafeArea()
 
@@ -131,6 +151,8 @@ struct MapScreen: View {
                         serverRouteInfoBar(route)
                     } else if let imported = activeImportedRoute {
                         importedRouteInfoBar(imported)
+                    } else if destinationCoordinate != nil {
+                        destinationInfoBar()
                     } else if let road = selectedCyclingRoad {
                         CyclingRoadDetailCard(
                             road: road,
@@ -302,7 +324,7 @@ struct MapScreen: View {
     // MARK: - Route Info Bars
 
     private var hasActiveRoute: Bool {
-        selectedRoute != nil || activeImportedRoute != nil
+        selectedRoute != nil || activeImportedRoute != nil || (destinationCoordinate != nil && valhallaRoute != nil)
     }
 
     private func serverRouteInfoBar(_ route: SavedRoute) -> some View {
@@ -478,12 +500,17 @@ struct MapScreen: View {
         // 走行モードの音声トリガ距離を適用
         navManager.voiceTriggerDistances = rideMode.voiceTriggerDistances
 
-        // Valhalla ルートがある場合はターンバイターンナビを開始
+        // ターンバイターンナビを開始（RouteProvider 取得済みルート）
         if let vRoute = valhallaRoute {
-            navManager.start(
-                route: vRoute,
-                waypoints: selectedRoute?.waypoints.map(\.coordinate) ?? navigationCoordinates
-            )
+            let waypoints: [CLLocationCoordinate2D]
+            if let serverRoute = selectedRoute {
+                waypoints = serverRoute.waypoints.map(\.coordinate)
+            } else if let dest = destinationCoordinate, let loc = locationService.currentLocation {
+                waypoints = [loc.coordinate, dest]
+            } else {
+                waypoints = navigationCoordinates
+            }
+            navManager.start(route: vRoute, waypoints: waypoints)
         }
 
         // ナビ開始時に現在地付近をズームイン
@@ -505,6 +532,7 @@ struct MapScreen: View {
         // ルート選択状態をクリア（他のルートをタップ可能にする）
         selectedRoute = nil
         activeImportedRoute = nil
+        destinationCoordinate = nil
         navigationCoordinates = []
         valhallaRoute = nil
         elevationProfile = nil
@@ -537,8 +565,10 @@ struct MapScreen: View {
 
     private func performReroute(_ request: NavigationManager.RerouteRequest) async {
         do {
-            let newRoute = try await ValhallaService.fetchRoute(
-                waypoints: [request.from, request.to]
+            let provider = routeProvider
+            let newRoute = try await provider.fetchRoute(
+                from: request.from,
+                to: request.to
             )
             navManager.applyReroute(newRoute)
             valhallaRoute = newRoute
@@ -556,20 +586,19 @@ struct MapScreen: View {
         selectedRoute = route
         navigationCoordinates = route.coordinates
 
-        // Valhalla ルートを取得（ターンバイターンナビ用）
+        // ルートプロバイダでターンバイターンルートを取得
         Task {
             do {
-                valhallaRoute = try await ValhallaService.fetchRoute(
+                let provider = routeProvider
+                valhallaRoute = try await provider.fetchRoute(
                     waypoints: route.waypoints.map(\.coordinate)
                 )
-                // Valhalla のルート形状で上書き（より正確）
                 if let vRoute = valhallaRoute {
                     navigationCoordinates = vRoute.coordinates
                 }
             } catch {
-                // Valhalla 失敗時はライン追従ナビのみ
                 valhallaRoute = nil
-                errorMessage = "Valhalla: \(error.localizedDescription)"
+                errorMessage = "ルート取得失敗: \(error.localizedDescription)"
             }
         }
 
@@ -599,6 +628,7 @@ struct MapScreen: View {
         if isNavigating { stopNavigation() }
         selectedRoute = nil
         activeImportedRoute = nil
+        destinationCoordinate = nil
         navigationCoordinates = []
         valhallaRoute = nil
         elevationProfile = nil
@@ -672,29 +702,119 @@ struct MapScreen: View {
         let coords = road.coordinates
         guard coords.count >= 2 else { return }
 
-        // 既存ルートをクリアしてナビ座標をセット
         clearRoute()
         navigationCoordinates = coords
         selectedCyclingRoad = nil
         cyclingRoadElevation = nil
 
-        // Valhalla でターンバイターンルートを取得（始点・終点のみ）
         let start = coords.first!
         let end = coords.last!
         Task {
             do {
-                valhallaRoute = try await ValhallaService.fetchRoute(
-                    waypoints: [start, end]
-                )
+                let provider = routeProvider
+                valhallaRoute = try await provider.fetchRoute(from: start, to: end)
                 if let vRoute = valhallaRoute {
                     navigationCoordinates = vRoute.coordinates
                 }
             } catch {
                 valhallaRoute = nil
             }
-            // ナビ開始
             startNavigation()
         }
+    }
+
+    // MARK: - Destination (standalone navigation)
+
+    /// ロングプレスで目的地を設定し、現在地からのルートを取得
+    private func setDestination(_ coordinate: CLLocationCoordinate2D) {
+        // ナビ中は目的地設定を無視
+        guard !isNavigating else { return }
+
+        clearRoute()
+        destinationCoordinate = coordinate
+        applyFocus(coordinate)
+
+        // 現在地が取得できればルート計算開始
+        if let currentLoc = locationService.currentLocation {
+            fetchRouteToDestination(from: currentLoc.coordinate, to: coordinate)
+        } else {
+            // 位置情報を取得してからルート計算
+            locationService.startTracking()
+            Task {
+                try? await Task.sleep(for: .seconds(2))
+                if let loc = locationService.currentLocation {
+                    fetchRouteToDestination(from: loc.coordinate, to: coordinate)
+                } else {
+                    errorMessage = "現在地を取得できません"
+                }
+            }
+        }
+    }
+
+    private func fetchRouteToDestination(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) {
+        isLoadingRoute = true
+        Task {
+            do {
+                let provider = routeProvider
+                let route = try await provider.fetchRoute(from: from, to: to)
+                valhallaRoute = route
+                navigationCoordinates = route.coordinates
+            } catch {
+                errorMessage = "ルート取得失敗: \(error.localizedDescription)"
+                valhallaRoute = nil
+            }
+            isLoadingRoute = false
+        }
+    }
+
+    private func destinationInfoBar() -> some View {
+        VStack(spacing: 0) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("目的地").font(.headline)
+                    if isLoadingRoute {
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("ルート計算中...")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else if let route = valhallaRoute {
+                        HStack(spacing: 12) {
+                            Text(String(format: "%.1f km", route.totalDistanceKm))
+                            Text(formatDuration(route.totalTimeSeconds / 60))
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
+                }
+                Spacer()
+                if valhallaRoute != nil {
+                    Button {
+                        startNavigation()
+                    } label: {
+                        Label("ナビ開始", systemImage: "location.north.fill")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(.blue, in: Capsule())
+                    }
+                }
+                Button { withAnimation { clearRoute() } } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(.ultraThinMaterial)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 8)
+        .padding(.bottom, 8)
     }
 
     // MARK: - Helpers

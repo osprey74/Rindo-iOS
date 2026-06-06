@@ -10,6 +10,7 @@
 		055FD0D2DAB5D8CA46500E25 /* SavedLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B067FE8D627B1650A1D72589 /* SavedLocation.swift */; };
 		0CEDEEA9761BE5013013E191 /* osm-style.json in Resources */ = {isa = PBXBuildFile; fileRef = A4A3C05795184CB478A6CD35 /* osm-style.json */; };
 		0FE44E863F1B9334F5C9E13C /* RideHistoryPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83F5632A7C3A3B68BA158CB5 /* RideHistoryPanel.swift */; };
+		1269658E1D1EE75C3CE93380 /* ValhallaRouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C49CEB7CEEBFE3AD7C5E69BE /* ValhallaRouteProvider.swift */; };
 		151885C59AB91AA43C72728A /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B44AA10AF14ED0E872DC51F5 /* LoginView.swift */; };
 		1CC97E82F5B293E835AE54FB /* ManeuverParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9704ECFAE05D3B628FCED74C /* ManeuverParser.swift */; };
 		23430FC04A3449D968680BCE /* HealthKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEED720D5B7287F14641DF4A /* HealthKitService.swift */; };
@@ -28,6 +29,7 @@
 		6E0C1886E773CF1DA58FA6B1 /* AuthModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9579908B93DA4B69A6A3B48D /* AuthModels.swift */; };
 		6E54D4713185D14D865D068E /* GPXExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26110D02CCC4D83369DE6A76 /* GPXExporter.swift */; };
 		75D238822F0DA55139BD2F39 /* VoiceGuide.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BAF57B3E3CC0F0B8446A3B5 /* VoiceGuide.swift */; };
+		75DDF927CC14C0D0CFAEF5A1 /* NavigationRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8691B256EAF314AA7267E290 /* NavigationRoute.swift */; };
 		7915C5C1D8E9403536866EAB /* RideRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2178CB9675CF7CA17D630E78 /* RideRecorder.swift */; };
 		7A79338779E32BDA4B236D83 /* MapLayerStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C0943BE4F846550792954B6 /* MapLayerStyle.swift */; };
 		7BBD1C6051B3F648113F0B38 /* NavigationInfoPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE42314A1E5AAB7B68C0124F /* NavigationInfoPanel.swift */; };
@@ -36,6 +38,7 @@
 		818A022A57CDC1061A25EAFA /* sapporo-cyclingroad.corrected.geojson in Resources */ = {isa = PBXBuildFile; fileRef = 492D9ADFEF48546DD80C94CF /* sapporo-cyclingroad.corrected.geojson */; };
 		819026786C7EDE5F6B4B5A11 /* OfflineMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5734F82D31A4CF962DC9497 /* OfflineMapView.swift */; };
 		8A1541D965875EC4741F411E /* SimpleNavView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70C8241C9BB2BCA598AD68F8 /* SimpleNavView.swift */; };
+		8ADEE6DF843DFB818854858C /* RouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A678E4A56AF283CE03AADE1 /* RouteProvider.swift */; };
 		8CA5AD460E26591D1783DD2F /* TurnByTurnPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAFCE5B4E6062940B8E720D2 /* TurnByTurnPanel.swift */; };
 		8D8D53CED77FA4D9C50D5113 /* OfflineMapManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58B38C0E43D8BFA955E53908 /* OfflineMapManager.swift */; };
 		8E67144E85CCD66227E9690B /* SavedLocationsPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC2258D014E2B1876445AA2 /* SavedLocationsPanel.swift */; };
@@ -47,6 +50,7 @@
 		B2083FDE2480A053FAFBAE4E /* NavigationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0F0FB41D11F02841C7AC55 /* NavigationManager.swift */; };
 		CC22BC1146737844C82C69E9 /* RindoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F29A6D8ADCA017F35CAD45 /* RindoApp.swift */; };
 		CDB46ACBD872C80BD68686AF /* RindoMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71577F24BBF2F35D16CD3844 /* RindoMapView.swift */; };
+		CF0EBDAB0F025AE2071812F9 /* AppleRouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6AF737B3FA2ECA024DD9871 /* AppleRouteProvider.swift */; };
 		D073F1DDDBE435367813CB22 /* ValhallaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F72064002F7AE128E36BEAAB /* ValhallaService.swift */; };
 		D232A0C914825ED8D1C53985 /* RideMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C5D96D47939CD2BE33D981C /* RideMode.swift */; };
 		D2EA92B5217A366A454435EC /* CyclingRoadDetailCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EA1887C3B7D6F5431D37B68 /* CyclingRoadDetailCard.swift */; };
@@ -74,6 +78,7 @@
 		2178CB9675CF7CA17D630E78 /* RideRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideRecorder.swift; sourceTree = "<group>"; };
 		26110D02CCC4D83369DE6A76 /* GPXExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXExporter.swift; sourceTree = "<group>"; };
 		27D637225DF76267C253FE4E /* ImportedRoutesPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedRoutesPanel.swift; sourceTree = "<group>"; };
+		2A2B80C57E0D6C304CA689DD /* SapporoStation.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = SapporoStation.gpx; sourceTree = "<group>"; };
 		2EA1887C3B7D6F5431D37B68 /* CyclingRoadDetailCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyclingRoadDetailCard.swift; sourceTree = "<group>"; };
 		32B76B8124466E1A7074EBFB /* ImportedRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedRoute.swift; sourceTree = "<group>"; };
 		35360F9D189997ADEC1FB6A0 /* LocationPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPopover.swift; sourceTree = "<group>"; };
@@ -81,6 +86,7 @@
 		3FAF34924EC1D7D51E8ED219 /* ReminderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderManager.swift; sourceTree = "<group>"; };
 		4426995F5955659EEDDC9674 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		492D9ADFEF48546DD80C94CF /* sapporo-cyclingroad.corrected.geojson */ = {isa = PBXFileReference; path = "sapporo-cyclingroad.corrected.geojson"; sourceTree = "<group>"; };
+		4A678E4A56AF283CE03AADE1 /* RouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteProvider.swift; sourceTree = "<group>"; };
 		4C0943BE4F846550792954B6 /* MapLayerStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapLayerStyle.swift; sourceTree = "<group>"; };
 		54F29A6D8ADCA017F35CAD45 /* RindoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RindoApp.swift; sourceTree = "<group>"; };
 		58B38C0E43D8BFA955E53908 /* OfflineMapManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapManager.swift; sourceTree = "<group>"; };
@@ -94,6 +100,7 @@
 		7A0FDB08B25A72EF5BE3C18E /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		8124F62BA1F39CA06E0856F3 /* ElevationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationService.swift; sourceTree = "<group>"; };
 		83F5632A7C3A3B68BA158CB5 /* RideHistoryPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideHistoryPanel.swift; sourceTree = "<group>"; };
+		8691B256EAF314AA7267E290 /* NavigationRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationRoute.swift; sourceTree = "<group>"; };
 		8B1A15858FEB15AE9006E214 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		9579908B93DA4B69A6A3B48D /* AuthModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthModels.swift; sourceTree = "<group>"; };
 		9704ECFAE05D3B628FCED74C /* ManeuverParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManeuverParser.swift; sourceTree = "<group>"; };
@@ -106,10 +113,14 @@
 		B067FE8D627B1650A1D72589 /* SavedLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedLocation.swift; sourceTree = "<group>"; };
 		B44AA10AF14ED0E872DC51F5 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		BB0626BA985CE2903E3E0D20 /* Rindo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Rindo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C49CEB7CEEBFE3AD7C5E69BE /* ValhallaRouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValhallaRouteProvider.swift; sourceTree = "<group>"; };
+		C6AF737B3FA2ECA024DD9871 /* AppleRouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleRouteProvider.swift; sourceTree = "<group>"; };
 		CAFCE5B4E6062940B8E720D2 /* TurnByTurnPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnByTurnPanel.swift; sourceTree = "<group>"; };
 		CE26C14188683CAC54851BE2 /* ElevationChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationChart.swift; sourceTree = "<group>"; };
+		E3C03228607A2AF57533EE9B /* SapporoRide.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = SapporoRide.gpx; sourceTree = "<group>"; };
 		E5734F82D31A4CF962DC9497 /* OfflineMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapView.swift; sourceTree = "<group>"; };
 		E6B2DE7731FF35FF14D423B4 /* GPXParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXParser.swift; sourceTree = "<group>"; };
+		E8B06854739F30CFBB524592 /* SapporoOodoriPark.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = SapporoOodoriPark.gpx; sourceTree = "<group>"; };
 		E95BD14DF26654CDD9E622B9 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		EDC2258D014E2B1876445AA2 /* SavedLocationsPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedLocationsPanel.swift; sourceTree = "<group>"; };
 		EFA4C4B0A1E7087270345C93 /* RindoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RindoTests.swift; sourceTree = "<group>"; };
@@ -259,6 +270,9 @@
 				A4A3C05795184CB478A6CD35 /* osm-style.json */,
 				99E7B4EAED30E58C7A604C26 /* Rindo.entitlements */,
 				492D9ADFEF48546DD80C94CF /* sapporo-cyclingroad.corrected.geojson */,
+				E8B06854739F30CFBB524592 /* SapporoOodoriPark.gpx */,
+				E3C03228607A2AF57533EE9B /* SapporoRide.gpx */,
+				2A2B80C57E0D6C304CA689DD /* SapporoStation.gpx */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -266,7 +280,11 @@
 		8A4A8066F343BE4166C75C10 /* Routing */ = {
 			isa = PBXGroup;
 			children = (
+				C6AF737B3FA2ECA024DD9871 /* AppleRouteProvider.swift */,
+				8691B256EAF314AA7267E290 /* NavigationRoute.swift */,
 				9C5CBC81739C3DB5FCF98362 /* PolylineDecoder.swift */,
+				4A678E4A56AF283CE03AADE1 /* RouteProvider.swift */,
+				C49CEB7CEEBFE3AD7C5E69BE /* ValhallaRouteProvider.swift */,
 				F72064002F7AE128E36BEAAB /* ValhallaService.swift */,
 			);
 			path = Routing;
@@ -489,6 +507,7 @@
 			files = (
 				AFEF81B0A57DB796124B17F7 /* APIClient.swift in Sources */,
 				DA3EB52CC28D9C6E560328F1 /* AppConfig.swift in Sources */,
+				CF0EBDAB0F025AE2071812F9 /* AppleRouteProvider.swift in Sources */,
 				ADD9F697F09A8E082236B323 /* ArrowImage.swift in Sources */,
 				51A6917F0A0C51D8D965BAEB /* AttributionView.swift in Sources */,
 				6E0C1886E773CF1DA58FA6B1 /* AuthModels.swift in Sources */,
@@ -511,6 +530,7 @@
 				9D40CA5DE6A79658DF0489F8 /* MapScreen.swift in Sources */,
 				7BBD1C6051B3F648113F0B38 /* NavigationInfoPanel.swift in Sources */,
 				B2083FDE2480A053FAFBAE4E /* NavigationManager.swift in Sources */,
+				75DDF927CC14C0D0CFAEF5A1 /* NavigationRoute.swift in Sources */,
 				8D8D53CED77FA4D9C50D5113 /* OfflineMapManager.swift in Sources */,
 				819026786C7EDE5F6B4B5A11 /* OfflineMapView.swift in Sources */,
 				AA6D4A9C089FA4F1E41E207C /* PolylineDecoder.swift in Sources */,
@@ -521,6 +541,7 @@
 				7915C5C1D8E9403536866EAB /* RideRecorder.swift in Sources */,
 				CC22BC1146737844C82C69E9 /* RindoApp.swift in Sources */,
 				CDB46ACBD872C80BD68686AF /* RindoMapView.swift in Sources */,
+				8ADEE6DF843DFB818854858C /* RouteProvider.swift in Sources */,
 				055FD0D2DAB5D8CA46500E25 /* SavedLocation.swift in Sources */,
 				8E67144E85CCD66227E9690B /* SavedLocationsPanel.swift in Sources */,
 				56F5EE0116F6282E8CFDD8ED /* SavedRoute.swift in Sources */,
@@ -528,6 +549,7 @@
 				5201C258636A541A1F2A2F59 /* SettingsView.swift in Sources */,
 				8A1541D965875EC4741F411E /* SimpleNavView.swift in Sources */,
 				8CA5AD460E26591D1783DD2F /* TurnByTurnPanel.swift in Sources */,
+				1269658E1D1EE75C3CE93380 /* ValhallaRouteProvider.swift in Sources */,
 				D073F1DDDBE435367813CB22 /* ValhallaService.swift in Sources */,
 				75D238822F0DA55139BD2F39 /* VoiceGuide.swift in Sources */,
 			);

@@ -21,8 +21,16 @@ struct RindoMapView: UIViewRepresentable {
     var onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)?
     var onLocationTapped: ((SavedLocation) -> Void)?
 
+    // 目的地設定（ロングプレス）
+    var destinationCoordinate: CLLocationCoordinate2D?
+    var onDestinationSet: ((CLLocationCoordinate2D) -> Void)?
+
     func makeCoordinator() -> Coordinator {
-        Coordinator(onCyclingRoadTapped: onCyclingRoadTapped, onLocationTapped: onLocationTapped)
+        Coordinator(
+            onCyclingRoadTapped: onCyclingRoadTapped,
+            onLocationTapped: onLocationTapped,
+            onDestinationSet: onDestinationSet
+        )
     }
 
     func makeUIView(context: Context) -> MLNMapView {
@@ -38,12 +46,22 @@ struct RindoMapView: UIViewRepresentable {
         mapView.allowsRotating = false
         mapView.allowsTilting = false
 
+        // ロングプレスで目的地を設定
+        let longPress = UILongPressGestureRecognizer(
+            target: context.coordinator,
+            action: #selector(Coordinator.handleLongPress(_:))
+        )
+        longPress.minimumPressDuration = 0.5
+        mapView.addGestureRecognizer(longPress)
+
         return mapView
     }
 
     func updateUIView(_ mapView: MLNMapView, context: Context) {
         context.coordinator.onCyclingRoadTapped = onCyclingRoadTapped
         context.coordinator.onLocationTapped = onLocationTapped
+        context.coordinator.onDestinationSet = onDestinationSet
+        context.coordinator.updateDestinationPin(mapView: mapView, coordinate: destinationCoordinate)
         context.coordinator.update(
             mapView: mapView,
             selectedRoute: selectedRoute,
@@ -112,11 +130,46 @@ struct RindoMapView: UIViewRepresentable {
         private var cyclingRoadFeatures: [CyclingRoadFeature] = []
         var onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)?
         var onLocationTapped: ((SavedLocation) -> Void)?
+        var onDestinationSet: ((CLLocationCoordinate2D) -> Void)?
 
-        init(onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)? = nil, onLocationTapped: ((SavedLocation) -> Void)? = nil) {
+        // 目的地ピン
+        private var destinationAnnotation: MLNPointAnnotation?
+
+        init(
+            onCyclingRoadTapped: ((CyclingRoadFeature) -> Void)? = nil,
+            onLocationTapped: ((SavedLocation) -> Void)? = nil,
+            onDestinationSet: ((CLLocationCoordinate2D) -> Void)? = nil
+        ) {
             self.onCyclingRoadTapped = onCyclingRoadTapped
             self.onLocationTapped = onLocationTapped
+            self.onDestinationSet = onDestinationSet
             super.init()
+        }
+
+        // MARK: - Long Press → Destination
+
+        @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+            guard gesture.state == .began,
+                  let mapView = gesture.view as? MLNMapView else { return }
+            let point = gesture.location(in: mapView)
+            let coordinate = mapView.convert(point, toCoordinateFrom: mapView)
+            onDestinationSet?(coordinate)
+        }
+
+        func updateDestinationPin(mapView: MLNMapView, coordinate: CLLocationCoordinate2D?) {
+            // 既存ピンを除去
+            if let existing = destinationAnnotation {
+                mapView.removeAnnotation(existing)
+                destinationAnnotation = nil
+            }
+
+            guard let coord = coordinate else { return }
+
+            let pin = MLNPointAnnotation()
+            pin.coordinate = coord
+            pin.title = "🏁 目的地"
+            mapView.addAnnotation(pin)
+            destinationAnnotation = pin
         }
 
         func update(
@@ -258,6 +311,38 @@ struct RindoMapView: UIViewRepresentable {
         func mapView(_ mapView: MLNMapView, viewFor annotation: MLNAnnotation) -> MLNAnnotationView? {
             guard let pointAnnotation = annotation as? MLNPointAnnotation else {
                 return nil
+            }
+
+            // 目的地ピン（ロングプレスで設定）
+            if pointAnnotation === destinationAnnotation {
+                let size: CGFloat = 40
+                let reuseID = "destination-pin"
+                var view = mapView.dequeueReusableAnnotationView(withIdentifier: reuseID)
+                if view == nil {
+                    view = MLNAnnotationView(reuseIdentifier: reuseID)
+                    view!.frame = CGRect(x: 0, y: 0, width: size, height: size)
+                    view!.centerOffset = CGVector(dx: 0, dy: -size / 2)
+                }
+                view!.subviews.forEach { $0.removeFromSuperview() }
+
+                let bg = UIView(frame: CGRect(x: 0, y: 0, width: size, height: size))
+                bg.backgroundColor = .systemRed
+                bg.layer.cornerRadius = size / 2
+                bg.layer.borderColor = UIColor.white.cgColor
+                bg.layer.borderWidth = 3
+                bg.layer.shadowColor = UIColor.black.cgColor
+                bg.layer.shadowOffset = CGSize(width: 0, height: 3)
+                bg.layer.shadowRadius = 4
+                bg.layer.shadowOpacity = 0.4
+
+                let icon = UIImageView(frame: bg.bounds.insetBy(dx: 8, dy: 8))
+                icon.image = UIImage(systemName: "flag.fill")
+                icon.tintColor = .white
+                icon.contentMode = .scaleAspectFit
+                bg.addSubview(icon)
+
+                view!.addSubview(bg)
+                return view
             }
 
             // 地点マーカー（カテゴリ別 emoji アイコン）

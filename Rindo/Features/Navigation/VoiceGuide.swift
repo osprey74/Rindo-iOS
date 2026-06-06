@@ -10,11 +10,33 @@ final class VoiceGuide {
     /// 音声案内が有効か
     var isEnabled = true
 
+    /// 発話中、または発話直後の待機中かどうか
+    var isSpeaking: Bool { synthesizer.isSpeaking || isCoolingDown }
+
+    /// 発話完了後のクールダウン中フラグ
+    private var isCoolingDown = false
+    /// 発話完了後の待機時間（秒）
+    var postSpeechDelay: TimeInterval = 1.0
+
     /// 発話済みマニューバ＋距離閾値の組み合わせを記録（重複防止）
     private var spokenKeys: Set<String> = []
 
+    private let delegate = VoiceGuideDelegate()
+
     init() {
+        synthesizer.delegate = delegate
+        delegate.onFinish = { [weak self] in
+            self?.startCooldown()
+        }
         configureAudioSession()
+    }
+
+    private func startCooldown() {
+        isCoolingDown = true
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(postSpeechDelay))
+            isCoolingDown = false
+        }
     }
 
     /// 音声案内をリクエスト（重複防止付き）
@@ -42,6 +64,7 @@ final class VoiceGuide {
     /// ルート変更時にスポーク履歴をリセット
     func reset() {
         spokenKeys.removeAll()
+        isCoolingDown = false
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
@@ -62,6 +85,18 @@ final class VoiceGuide {
             try session.setActive(true)
         } catch {
             // 音声セッション設定失敗は致命的ではない
+        }
+    }
+}
+
+// MARK: - Delegate
+
+private class VoiceGuideDelegate: NSObject, AVSpeechSynthesizerDelegate {
+    var onFinish: (() -> Void)?
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        Task { @MainActor in
+            onFinish?()
         }
     }
 }
