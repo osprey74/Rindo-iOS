@@ -1,3 +1,4 @@
+import ActivityKit
 import CoreLocation
 import Foundation
 
@@ -33,6 +34,10 @@ final class NavigationManager {
     private static let rerouteCooldownSeconds: TimeInterval = 30
     private static let deviationThresholdM: Double = 30
 
+    // Live Activity
+    private var liveActivity: Activity<NavigationActivityAttributes>?
+    private var lastActivityUpdate: Date = .distantPast
+
     // 音声トリガ距離閾値（m） — RideMode により外部から設定可能
     var voiceTriggerDistances: [Double] = [200, 100, 50]
 
@@ -44,24 +49,63 @@ final class NavigationManager {
     func start(route: NavigationRoute, waypoints: [CLLocationCoordinate2D]) {
         self.route = route
         self.originalWaypoints = waypoints
-        currentManeuverIndex = findFirstNonStartManeuver()
         remainingDistanceKm = route.totalDistanceKm
         remainingTimeSeconds = route.totalTimeSeconds
         isActive = true
         totalTraveledM = 0
         lastUpdateLocation = nil
         arrivalThresholdM = route.totalDistanceKm * 1000 * 0.5
+
+        // 出発地点にあるマニューバを事前にスキップ（updateLocation 中の reset を防ぐ）
+        // ただし目的地マニューバには進めない
+        let startCoord = waypoints[0]
+        let startLoc = CLLocation(latitude: startCoord.latitude, longitude: startCoord.longitude)
+        currentManeuverIndex = findFirstNonStartManeuver()
+        while currentManeuverIndex < route.maneuvers.count - 1 {
+            let nextIndex = currentManeuverIndex + 1
+            if ManeuverParser.isDestination(route.maneuvers[nextIndex].type) { break }
+            let coord = route.maneuvers[currentManeuverIndex].coordinate
+            let dist = startLoc.distance(from: CLLocation(latitude: coord.latitude, longitude: coord.longitude))
+            if dist < 20 {
+                currentManeuverIndex = nextIndex
+            } else {
+                break
+            }
+        }
+
+        // 初期距離を計算
+        if let maneuver = currentManeuver {
+            let maneuverLoc = CLLocation(latitude: maneuver.coordinate.latitude, longitude: maneuver.coordinate.longitude)
+            distanceToNextManeuverM = startLoc.distance(from: maneuverLoc)
+        }
+
         voiceGuide.reset()
 
-        // 開始音声: ルート概要のみ（最初のマニューバは猶予後に距離トリガーで案内）
-        let summary = startSummary(route: route)
-        voiceGuide.speak(summary + "ナビゲーションを開始します。", key: "start")
+        // 開始音声: ルート概要 → 2秒ポーズ → 最初のマニューバ案内
+        let startText = startSummary(route: route) + "ナビゲーションを開始します。"
+        if let maneuver = currentManeuver {
+            let dist = distanceToNextManeuverM
+            let distText: String
+            if dist < 80 {
+                distText = "まもなく、"
+            } else {
+                let rounded = Int((dist / 50).rounded()) * 50
+                distText = "\(rounded)メートル先、"
+            }
+            let maneuverText = distText + maneuver.voiceInstruction
+            voiceGuide.speakWithPause(startText, pause: 2.0, maneuverText, key: "start")
+        } else {
+            voiceGuide.speak(startText, key: "start")
+        }
+
+        startLiveActivity()
     }
 
     func stop() {
         isActive = false
         route = nil
         voiceGuide.reset()
+        stopLiveActivity()
     }
 
     // MARK: - Location Update
@@ -147,16 +191,19 @@ final class NavigationManager {
         currentCoord: CLLocationCoordinate2D,
         route: NavigationRoute
     ) {
-        // 次のマニューバに進んだか判定
+        // 次のマニューバに進んだか判定（目的地マニューバへは到着判定で遷移）
         while currentManeuverIndex < route.maneuvers.count - 1 {
-            // 現在のマニューバ地点を通過したら次に進む
+            let nextIndex = currentManeuverIndex + 1
+            if ManeuverParser.isDestination(route.maneuvers[nextIndex].type) { break }
+
             let currentManeuverCoord = route.maneuvers[currentManeuverIndex].coordinate
             let distToCurrent = CLLocation(latitude: currentCoord.latitude, longitude: currentCoord.longitude)
                 .distance(from: CLLocation(latitude: currentManeuverCoord.latitude, longitude: currentManeuverCoord.longitude))
 
-            if distToCurrent < 20 && currentManeuverIndex < route.maneuvers.count - 1 {
-                currentManeuverIndex += 1
+            if distToCurrent < 20 {
+                currentManeuverIndex = nextIndex
                 voiceGuide.reset() // 新しいマニューバ用に発話履歴リセット
+                lastActivityUpdate = .distantPast // マニューバ切替時は即更新
             } else {
                 break
             }
@@ -170,6 +217,9 @@ final class NavigationManager {
 
             // 音声トリガ
             triggerVoiceIfNeeded(maneuver: next, distanceM: distanceToNextManeuverM)
+
+            // Live Activity 更新（5秒間隔 or マニューバ切替時）
+            updateLiveActivityIfNeeded()
         }
     }
 
@@ -180,11 +230,16 @@ final class NavigationManager {
         for threshold in voiceTriggerDistances {
             if distanceM <= threshold {
                 let key = "m\(currentManeuverIndex)_\(Int(threshold))m"
-                let distText = threshold >= 100
-                    ? "\(Int(threshold))メートル先、"
-                    : "まもなく、"
+                if voiceGuide.hasSpoken(key: key) { continue }
+                let distText: String
+                if distanceM < 80 {
+                    distText = "まもなく、"
+                } else {
+                    let rounded = Int((distanceM / 50).rounded()) * 50
+                    distText = "\(rounded)メートル先、"
+                }
                 voiceGuide.speak(distText + maneuver.voiceInstruction, key: key)
-                break // 最も近い閾値のみ
+                break
             }
         }
 
@@ -239,5 +294,43 @@ final class NavigationManager {
         }
         remainingDistanceKm = dist
         remainingTimeSeconds = time
+    }
+
+    // MARK: - Live Activity
+
+    private func makeActivityState() -> NavigationActivityAttributes.ContentState {
+        let maneuver = currentManeuver
+        return .init(
+            maneuverIcon: ManeuverParser.iconName(for: maneuver?.type ?? 0),
+            instruction: maneuver?.instruction ?? "",
+            distanceToNextM: distanceToNextManeuverM,
+            remainingDistanceKm: remainingDistanceKm,
+            remainingTimeSeconds: remainingTimeSeconds
+        )
+    }
+
+    private func startLiveActivity() {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        let attributes = NavigationActivityAttributes()
+        let state = makeActivityState()
+        liveActivity = try? Activity.request(
+            attributes: attributes,
+            content: .init(state: state, staleDate: nil)
+        )
+    }
+
+    private func updateLiveActivityIfNeeded() {
+        guard liveActivity != nil else { return }
+        let now = Date()
+        guard now.timeIntervalSince(lastActivityUpdate) >= 5 else { return }
+        lastActivityUpdate = now
+        let state = makeActivityState()
+        Task { await liveActivity?.update(.init(state: state, staleDate: nil)) }
+    }
+
+    private func stopLiveActivity() {
+        guard let activity = liveActivity else { return }
+        liveActivity = nil
+        Task { await activity.end(nil, dismissalPolicy: .immediate) }
     }
 }

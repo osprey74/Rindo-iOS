@@ -84,8 +84,7 @@ enum ValhallaService {
         let response = try await APIClient.shared.post(
             ValhallaRouteResponse.self,
             path: "/api/valhalla/route",
-            body: request,
-            baseURL: AppConfig.caddyBaseURL
+            body: request
         )
 
         guard let leg = response.trip.legs.first else {

@@ -16,14 +16,10 @@ struct SettingsView: View {
 
     // ルーティング
     @AppStorage("routingMode") private var routingMode = "apple"
-    @AppStorage("valhallaServerURL") private var valhallaServerURL = ""
-    @State private var isTestingConnection = false
-    @State private var connectionTestResult: ConnectionTestResult?
 
-    private enum ConnectionTestResult {
-        case success
-        case failure(String)
-    }
+    // バックエンドサーバ
+    @AppStorage("backendServerURL") private var backendServerURL = ""
+    @State private var loginError: String?
 
     var body: some View {
         NavigationStack {
@@ -55,43 +51,51 @@ struct SettingsView: View {
                     .pickerStyle(.inline)
 
                     if routingMode == "valhalla" {
-                        TextField("サーバー URL", text: $valhallaServerURL)
+                        TextField("https://example.com", text: $backendServerURL)
                             .keyboardType(.URL)
                             .textContentType(.URL)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
 
-                        Button {
-                            Task { await testValhallaConnection() }
-                        } label: {
+                        if auth.isAuthenticated {
                             HStack {
-                                Label("接続テスト", systemImage: "antenna.radiowaves.left.and.right")
-                                Spacer()
-                                if isTestingConnection {
-                                    ProgressView()
-                                        .controlSize(.small)
-                                } else if let result = connectionTestResult {
-                                    switch result {
-                                    case .success:
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundStyle(.green)
-                                    case .failure:
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundStyle(.red)
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                                Text("バックエンドサーバに接続中")
+                            }
+
+                            Button(role: .destructive) {
+                                Task { await auth.logout() }
+                            } label: {
+                                Label("切断", systemImage: "xmark.circle")
+                            }
+                        } else {
+                            Button {
+                                Task {
+                                    loginError = nil
+                                    do {
+                                        try await auth.login()
+                                    } catch {
+                                        loginError = error.localizedDescription
+                                    }
+                                }
+                            } label: {
+                                HStack {
+                                    Label("バックエンドサーバに接続", systemImage: "server.rack")
+                                    Spacer()
+                                    if auth.isLoading {
+                                        ProgressView()
+                                            .controlSize(.small)
                                     }
                                 }
                             }
-                        }
-                        .disabled(valhallaServerURL.isEmpty || isTestingConnection)
+                            .disabled(backendServerURL.isEmpty || auth.isLoading)
 
-                        if case .failure(let message) = connectionTestResult {
-                            Text(message)
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                        }
-
-                        Link(destination: URL(string: "https://github.com/user/Rindo-iOS/blob/main/docs/valhalla-setup.md")!) {
-                            Label("Valhalla サーバーの構築手順", systemImage: "doc.text")
+                            if let loginError {
+                                Text(loginError)
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                            }
                         }
                     }
                 } header: {
@@ -100,7 +104,10 @@ struct SettingsView: View {
                     if routingMode == "apple" {
                         Text("標準モードは徒歩ルートを自転車速度に換算してナビゲーションします")
                     } else {
-                        Text("自転車専用ルーティングには Valhalla サーバーが必要です")
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("自転車専用ルーティングにはバックエンドサーバへの接続が必要です\nValhalla と OpenStreetMap によるバックエンドサーバを用意するとウェブアプリ上でコース設計・スマホアプリとのコース同期などが行えます")
+                            Link("バックエンドサーバ接続手順", destination: URL(string: "https://github.com/osprey74/Rindo-iOS/blob/main/docs/valhalla-setup.md")!)
+                        }
                     }
                 }
 
@@ -153,51 +160,6 @@ struct SettingsView: View {
                     Text("GPX ファイルをインポートしてナビゲーションに使用できます")
                 }
 
-                // サーバ接続
-                Section {
-                    if auth.isAuthenticated {
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("接続中")
-                                    .font(.headline)
-                                Text(AppConfig.apiBaseURL.host ?? "")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-
-                        Button(role: .destructive) {
-                            Task { await auth.logout() }
-                        } label: {
-                            Label("ログアウト", systemImage: "rectangle.portrait.and.arrow.right")
-                        }
-                    } else {
-                        HStack {
-                            Image(systemName: "xmark.circle")
-                                .foregroundStyle(.secondary)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("未接続")
-                                    .font(.headline)
-                                Text("Tailscale 経由でサーバに接続するとルート同期等が使えます")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-
-                        Button {
-                            Task { try? await auth.login() }
-                        } label: {
-                            Label("ログイン", systemImage: "person.crop.circle.badge.plus")
-                        }
-                    }
-                } header: {
-                    Text("サーバ接続")
-                } footer: {
-                    Text("ログインなしでも GPX インポートとナビゲーションは利用できます")
-                }
-
                 // アプリ情報
                 Section("アプリ情報") {
                     HStack {
@@ -232,28 +194,6 @@ struct SettingsView: View {
                     Button("閉じる") { dismiss() }
                 }
             }
-        }
-    }
-
-    private func testValhallaConnection() async {
-        isTestingConnection = true
-        connectionTestResult = nil
-        defer { isTestingConnection = false }
-
-        guard let baseURL = URL(string: valhallaServerURL) else {
-            connectionTestResult = .failure("無効な URL です")
-            return
-        }
-
-        // 札幌駅→大通公園の短距離テストルートをリクエスト
-        do {
-            let provider = ValhallaRouteProvider(baseURL: baseURL)
-            let sapporoStation = CLLocationCoordinate2D(latitude: 43.0686, longitude: 141.3508)
-            let odoriPark = CLLocationCoordinate2D(latitude: 43.0597, longitude: 141.3563)
-            _ = try await provider.fetchRoute(from: sapporoStation, to: odoriPark)
-            connectionTestResult = .success
-        } catch {
-            connectionTestResult = .failure(error.localizedDescription)
         }
     }
 

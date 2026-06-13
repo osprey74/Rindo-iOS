@@ -65,17 +65,14 @@ struct MapScreen: View {
 
     // ルーティングモード設定
     @AppStorage("routingMode") private var routingMode = "apple"
-    @AppStorage("valhallaServerURL") private var valhallaServerURL = ""
 
     // エラー
     @State private var errorMessage: String?
 
     /// 現在のルーティング設定に基づくプロバイダを返す
     private var routeProvider: any RouteProvider {
-        if routingMode == "valhalla",
-           !valhallaServerURL.isEmpty,
-           let url = URL(string: valhallaServerURL) {
-            return ValhallaRouteProvider(baseURL: url)
+        if routingMode == "valhalla", AppConfig.backendServerURL != nil {
+            return ValhallaRouteProvider()
         }
         return AppleRouteProvider()
     }

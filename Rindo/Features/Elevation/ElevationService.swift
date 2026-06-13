@@ -175,8 +175,7 @@ enum ElevationService {
         let response = try await APIClient.shared.post(
             OpenTopoResponse.self,
             path: "/api/elevation",
-            body: body,
-            baseURL: AppConfig.caddyBaseURL
+            body: body
         )
         guard response.status == "OK" else {
             throw ElevationError.apiFailed(response.error ?? response.status)

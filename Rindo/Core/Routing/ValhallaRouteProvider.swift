@@ -1,11 +1,8 @@
 import CoreLocation
 import Foundation
 
-/// Valhalla サーバーを使った自転車専用ルーティング
-/// 設定画面から入力されたカスタム URL、または既定の Caddy URL を使用
+/// バックエンドサーバの Valhalla API を使った自転車専用ルーティング
 struct ValhallaRouteProvider: RouteProvider {
-    let baseURL: URL
-
     func fetchRoute(
         waypoints: [CLLocationCoordinate2D]
     ) async throws -> NavigationRoute {
@@ -27,8 +24,7 @@ struct ValhallaRouteProvider: RouteProvider {
         let response = try await APIClient.shared.post(
             ValhallaRouteResponse.self,
             path: "/api/valhalla/route",
-            body: requestBody,
-            baseURL: baseURL
+            body: requestBody
         )
 
         guard let leg = response.trip.legs.first else {

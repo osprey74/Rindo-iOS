@@ -2,6 +2,7 @@ import Foundation
 
 enum APIError: LocalizedError {
     case invalidURL
+    case serverNotConfigured
     case httpError(statusCode: Int)
     case noData
     case unauthorized
@@ -10,6 +11,8 @@ enum APIError: LocalizedError {
         switch self {
         case .invalidURL:
             return "無効なURLです"
+        case .serverNotConfigured:
+            return "バックエンドサーバの URL が設定されていません"
         case .httpError(let code):
             return "サーバエラー（\(code)）"
         case .noData:
@@ -24,14 +27,14 @@ actor APIClient {
     static let shared = APIClient()
 
     private let session: URLSession
-    private let baseURL: URL
     private var token: String?
+
+    private var baseURL: URL? { AppConfig.backendServerURL }
 
     private init() {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
         self.session = URLSession(configuration: config)
-        self.baseURL = AppConfig.apiBaseURL
     }
 
     func setToken(_ token: String?) {
@@ -42,7 +45,9 @@ actor APIClient {
 
     /// Raw data fetch — useful for passing GeoJSON directly to MapLibre
     func fetchData(path: String, baseURL override: URL? = nil) async throws -> Data {
-        let base = override ?? baseURL
+        guard let base = override ?? baseURL else {
+            throw APIError.serverNotConfigured
+        }
         guard let url = URL(string: path, relativeTo: base) else {
             throw APIError.invalidURL
         }
@@ -68,7 +73,9 @@ actor APIClient {
         body: (any Encodable & Sendable)? = nil,
         baseURL override: URL? = nil
     ) async throws -> T {
-        let base = override ?? baseURL
+        guard let base = override ?? baseURL else {
+            throw APIError.serverNotConfigured
+        }
         guard let url = URL(string: path, relativeTo: base) else {
             throw APIError.invalidURL
         }
@@ -88,7 +95,10 @@ actor APIClient {
 
     /// POST with no meaningful response body (fire-and-forget)
     func postIgnoringResponse(path: String) async throws {
-        guard let url = URL(string: path, relativeTo: baseURL) else {
+        guard let base = baseURL else {
+            throw APIError.serverNotConfigured
+        }
+        guard let url = URL(string: path, relativeTo: base) else {
             throw APIError.invalidURL
         }
         var request = URLRequest(url: url)
