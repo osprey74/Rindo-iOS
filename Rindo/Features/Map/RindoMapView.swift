@@ -25,6 +25,12 @@ struct RindoMapView: UIViewRepresentable {
     var destinationCoordinate: CLLocationCoordinate2D?
     var onDestinationSet: ((CLLocationCoordinate2D) -> Void)?
 
+    // 下部パネルの高さ（ロゴ・帰属表示ボタンをその上に配置する）
+    var bottomOrnamentInset: CGFloat = 0
+
+    // 折りたたみ端末の半開き時の折り目（地図ビューの座標系、なければ nil）
+    var foldFrame: CGRect?
+
     func makeCoordinator() -> Coordinator {
         Coordinator(
             onCyclingRoadTapped: onCyclingRoadTapped,
@@ -62,6 +68,18 @@ struct RindoMapView: UIViewRepresentable {
         context.coordinator.onLocationTapped = onLocationTapped
         context.coordinator.onDestinationSet = onDestinationSet
         context.coordinator.updateDestinationPin(mapView: mapView, coordinate: destinationCoordinate)
+
+        // 縦の折り目がある半開き時はパネルが右側だけにあるため、左下のロゴは下げたままにする
+        let isVerticalFold = foldFrame.map(FoldLayout.isVertical) ?? false
+        let logoMargins = CGPoint(x: 8, y: isVerticalFold ? 8 : 8 + bottomOrnamentInset)
+        let attributionMargins = CGPoint(x: 8, y: 8 + bottomOrnamentInset)
+        if mapView.logoViewMargins != logoMargins {
+            mapView.logoViewMargins = logoMargins
+        }
+        if mapView.attributionButtonMargins != attributionMargins {
+            mapView.attributionButtonMargins = attributionMargins
+        }
+
         context.coordinator.update(
             mapView: mapView,
             selectedRoute: selectedRoute,
@@ -74,7 +92,8 @@ struct RindoMapView: UIViewRepresentable {
             cyclingRoads: cyclingRoads,
             nextManeuverCoordinate: nextManeuverCoordinate
         )
-        if let coord = focusCoordinate {
+        // ナビ中のカメラは下の追従処理で一元制御する（ここで中心を動かすと追従位置と競合する）
+        if let coord = focusCoordinate, !isNavigating {
             let zoom = focusZoomLevel ?? 15
             mapView.setCenter(coord, zoomLevel: zoom, animated: true)
         }
@@ -88,19 +107,53 @@ struct RindoMapView: UIViewRepresentable {
             }
 
             let coord = loc.coordinate
-            let mapHeight = mapView.frame.height
-            // 現在地を画面下 1/3 に配置するため、画面中心を進行方向前方にオフセット
-            let offsetY = mapHeight / 6
-            let centerPoint = mapView.convert(coord, toPointTo: mapView)
-            let adjustedPoint = CGPoint(x: centerPoint.x, y: centerPoint.y - offsetY)
-            let adjustedCoord = mapView.convert(adjustedPoint, toCoordinateFrom: mapView)
-            mapView.setCenter(adjustedCoord, animated: true)
+            let size = mapView.bounds.size
+            // 現在地を「パネルや折り目に隠れない可視領域」の下 1/3・左右中央に配置する
+            // （横向きや折りたたみ端末では、画面全体基準だと下部パネルや折り目に重なる）
+            let insets = mapView.safeAreaInsets
+            var visible = CGRect(
+                x: insets.left,
+                y: insets.top,
+                width: size.width - insets.left - insets.right,
+                height: size.height - insets.top - insets.bottom
+            )
+            if let fold = foldFrame {
+                if FoldLayout.isVertical(fold) {
+                    // パネルは折り目の右側に寄せているので、地図は左側の領域で見せる
+                    visible.size.width = fold.minX - visible.minX
+                } else {
+                    visible.size.height = fold.minY - visible.minY
+                }
+            } else {
+                visible.size.height -= bottomOrnamentInset
+            }
+            let target = CGPoint(x: visible.midX, y: visible.minY + visible.height * 2 / 3)
+            // 現在地から地図中心へのずれ（画面上の右方向・上方向、ポイント）
+            let rightPoints = size.width / 2 - target.x
+            let upPoints = target.y - size.height / 2
+            // convert(_:toPointTo:) はアニメーション途中のカメラを基準にするため、
+            // 目標ズームでの距離換算で中心座標を直接求める（画面上方向 = 地図の向き）
+            let zoom = focusZoomLevel ?? mapView.zoomLevel
+            let metersPerPoint = mapView.metersPerPoint(atLatitude: coord.latitude) * pow(2, mapView.zoomLevel - zoom)
+            let ahead = Self.coordinate(coord, movedBy: upPoints * metersPerPoint, bearing: mapView.direction)
+            let center = Self.coordinate(ahead, movedBy: rightPoints * metersPerPoint, bearing: mapView.direction + 90)
+            mapView.setCenter(center, zoomLevel: zoom, animated: true)
         } else {
             // ナビ終了時はノースアップに戻す
             if mapView.direction != 0 {
                 mapView.direction = 0
             }
         }
+    }
+
+    /// 指定方位へ指定距離（m）移動した座標（数百 m 程度の近距離用の平面近似）
+    private static func coordinate(_ coord: CLLocationCoordinate2D, movedBy meters: Double, bearing: CLLocationDirection) -> CLLocationCoordinate2D {
+        let rad = bearing * .pi / 180
+        let metersPerDegreeLat = 111_320.0
+        return CLLocationCoordinate2D(
+            latitude: coord.latitude + meters * cos(rad) / metersPerDegreeLat,
+            longitude: coord.longitude + meters * sin(rad) / (metersPerDegreeLat * cos(coord.latitude * .pi / 180))
+        )
     }
 
     // MARK: - Coordinator

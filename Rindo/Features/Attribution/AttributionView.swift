@@ -64,8 +64,8 @@ struct AttributionView: View {
             .navigationTitle("出典・ライセンス")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("閉じる") { dismiss() }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("閉じる", systemImage: "xmark") { dismiss() }
                 }
             }
         }

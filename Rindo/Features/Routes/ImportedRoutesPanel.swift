@@ -32,11 +32,11 @@ struct ImportedRoutesPanel: View {
             .navigationTitle("GPX ルート")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .primaryAction) {
                     importButton
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("閉じる") { dismiss() }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("閉じる", systemImage: "xmark") { dismiss() }
                 }
             }
             .fileImporter(

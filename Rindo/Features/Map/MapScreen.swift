@@ -31,6 +31,11 @@ struct MapScreen: View {
     // 地図制御
     @State private var focusCoordinate: CLLocationCoordinate2D?
     @State private var navZoomLevel: Double?
+    @State private var bottomPanelHeight: CGFloat = 0
+
+    // 折りたたみ端末の折り目（地図座標系 / パネル座標系）
+    @State private var mapFold: CGRect?
+    @State private var panelFold: CGRect?
 
     // シート表示
     @State private var showRoutes = false
@@ -97,9 +102,12 @@ struct MapScreen: View {
                     applyFocus(location.coordinate)
                 },
                 destinationCoordinate: destinationCoordinate,
-                onDestinationSet: { coord in setDestination(coord) }
+                onDestinationSet: { coord in setDestination(coord) },
+                bottomOrnamentInset: bottomPanelHeight,
+                foldFrame: mapFold
             )
             .ignoresSafeArea()
+            .onGeometryChange(for: CGRect?.self) { FoldLayout.activeFold(in: $0) } action: { mapFold = $0 }
 
             VStack(spacing: 8) {
                 // 逸脱警告
@@ -161,6 +169,12 @@ struct MapScreen: View {
                     }
                 }
             }
+            // 地図のロゴ・帰属表示をパネルの上に逃がすため高さを計測
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bottomPanelHeight = $0 }
+            // 縦の折り目がある半開き時は、パネルを折り目の右側に寄せて折り目をまたがないようにする
+            .padding(.leading, panelFold.map { FoldLayout.isVertical($0) ? $0.maxX : 0 } ?? 0)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            .onGeometryChange(for: CGRect?.self) { FoldLayout.activeFold(in: $0) } action: { panelFold = $0 }
 
         }
         .fullScreenCover(isPresented: $showSimpleNav) {
@@ -173,23 +187,22 @@ struct MapScreen: View {
             )
         }
         .overlay(alignment: .topLeading) {
-            // 左上ボタン群
-            HStack(alignment: .top, spacing: 8) {
-                verticalButtons
-                actionButtons
+            // 左上ボタン群（エラーはボタンに重ならないよう、その下に表示）
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top, spacing: 8) {
+                    verticalButtons
+                    actionButtons
+                }
+                if let error = errorMessage {
+                    Text(error)
+                        .font(.caption)
+                        .padding(8)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                        .onTapGesture { errorMessage = nil }
+                }
             }
             .padding(.leading)
             .padding(.top, 60)
-        }
-        .overlay(alignment: .top) {
-            if let error = errorMessage {
-                Text(error)
-                    .font(.caption)
-                    .padding(8)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
-                    .padding(.top, 60)
-                    .onTapGesture { errorMessage = nil }
-            }
         }
         .sheet(isPresented: $showRoutes) {
             SavedRoutesPanel { route in selectServerRoute(route) }

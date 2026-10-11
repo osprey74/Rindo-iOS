@@ -35,8 +35,8 @@ struct SavedLocationsPanel: View {
             .navigationTitle("保存地点")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("閉じる") { dismiss() }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("閉じる", systemImage: "xmark") { dismiss() }
                 }
             }
         }

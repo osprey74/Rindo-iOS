@@ -38,6 +38,7 @@
 		7BBD1C6051B3F648113F0B38 /* NavigationInfoPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE42314A1E5AAB7B68C0124F /* NavigationInfoPanel.swift */; };
 		7C3D5E1ACD160617E3203BD5 /* ReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FAF34924EC1D7D51E8ED219 /* ReminderManager.swift */; };
 		7CEE0433DF32E97C4D244BB3 /* ImportedRoutesPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D637225DF76267C253FE4E /* ImportedRoutesPanel.swift */; };
+		7DDFA140D9DFABFE3FEC1F79 /* FoldLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA803E221502EFBCDFAE475D /* FoldLayout.swift */; };
 		818A022A57CDC1061A25EAFA /* sapporo-cyclingroad.corrected.geojson in Resources */ = {isa = PBXBuildFile; fileRef = 492D9ADFEF48546DD80C94CF /* sapporo-cyclingroad.corrected.geojson */; };
 		819026786C7EDE5F6B4B5A11 /* OfflineMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5734F82D31A4CF962DC9497 /* OfflineMapView.swift */; };
 		8A1541D965875EC4741F411E /* SimpleNavView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70C8241C9BB2BCA598AD68F8 /* SimpleNavView.swift */; };
@@ -147,6 +148,7 @@
 		C6AF737B3FA2ECA024DD9871 /* AppleRouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleRouteProvider.swift; sourceTree = "<group>"; };
 		CAFCE5B4E6062940B8E720D2 /* TurnByTurnPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnByTurnPanel.swift; sourceTree = "<group>"; };
 		CE26C14188683CAC54851BE2 /* ElevationChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationChart.swift; sourceTree = "<group>"; };
+		DA803E221502EFBCDFAE475D /* FoldLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoldLayout.swift; sourceTree = "<group>"; };
 		E3BAD85246613FDBE697EB9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E3C03228607A2AF57533EE9B /* SapporoRide.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = SapporoRide.gpx; sourceTree = "<group>"; };
 		E5734F82D31A4CF962DC9497 /* OfflineMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapView.swift; sourceTree = "<group>"; };
@@ -181,6 +183,7 @@
 				E2178665EA031DFF494B58F5 /* API */,
 				382329703DC0A5976433864B /* GPX */,
 				BD3D8B15A12354027F240567 /* Health */,
+				4CAD9E64FE08726A91667FB8 /* Layout */,
 				A61553F7B12E46EDF1D13BF4 /* Location */,
 				6B74B15C29CECFCD220DDF45 /* Ride */,
 				8A4A8066F343BE4166C75C10 /* Routing */,
@@ -250,6 +253,14 @@
 				8124F62BA1F39CA06E0856F3 /* ElevationService.swift */,
 			);
 			path = Elevation;
+			sourceTree = "<group>";
+		};
+		4CAD9E64FE08726A91667FB8 /* Layout */ = {
+			isa = PBXGroup;
+			children = (
+				DA803E221502EFBCDFAE475D /* FoldLayout.swift */,
+			);
+			path = Layout;
 			sourceTree = "<group>";
 		};
 		5175C485E9B6CFB6CC8D8E8A /* Models */ = {
@@ -584,6 +595,7 @@
 				D2EA92B5217A366A454435EC /* CyclingRoadDetailCard.swift in Sources */,
 				990A6E8A4E8491E2C52B720F /* ElevationChart.swift in Sources */,
 				5A0221F62EDCF5FE52413E5A /* ElevationService.swift in Sources */,
+				7DDFA140D9DFABFE3FEC1F79 /* FoldLayout.swift in Sources */,
 				6E54D4713185D14D865D068E /* GPXExporter.swift in Sources */,
 				6A70778E5A39F37BD3D81140 /* GPXParser.swift in Sources */,
 				23430FC04A3449D968680BCE /* HealthKitService.swift in Sources */,
@@ -658,7 +670,7 @@
 				CODE_SIGN_ENTITLEMENTS = Rindo/Resources/Rindo.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 9L6A9KDH5P;
 				DWARF_DSYM_FILE_SHOULD_ACCOMPANY_PRODUCT = YES;
@@ -667,7 +679,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.osprey74.rindo;
 				SDKROOT = iphoneos;
 				SWIFT_STRICT_CONCURRENCY = complete;
@@ -679,7 +691,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 9L6A9KDH5P;
 				INFOPLIST_FILE = RindoLiveActivity/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -687,7 +699,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.osprey74.rindo.live-activity";
 				SDKROOT = iphoneos;
 				SWIFT_STRICT_CONCURRENCY = complete;
@@ -762,7 +774,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 9L6A9KDH5P;
 				INFOPLIST_FILE = RindoLiveActivity/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -770,7 +782,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.osprey74.rindo.live-activity";
 				SDKROOT = iphoneos;
 				SWIFT_STRICT_CONCURRENCY = complete;
@@ -786,7 +798,7 @@
 				CODE_SIGN_ENTITLEMENTS = Rindo/Resources/Rindo.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 9L6A9KDH5P;
 				DWARF_DSYM_FILE_SHOULD_ACCOMPANY_PRODUCT = YES;
@@ -795,7 +807,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.osprey74.rindo;
 				SDKROOT = iphoneos;
 				SWIFT_STRICT_CONCURRENCY = complete;
