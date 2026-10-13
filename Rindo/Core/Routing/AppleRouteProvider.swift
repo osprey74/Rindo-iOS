@@ -142,17 +142,19 @@ struct AppleRouteProvider: RouteProvider {
         previousStep: MKRoute.Step?
     ) -> Int {
         // 日本語キーワードマッチング
-        if instruction.contains("右に曲") || instruction.contains("右折") {
-            return 10 // Right
-        }
-        if instruction.contains("左に曲") || instruction.contains("左折") {
-            return 15 // Left
-        }
+        // 「斜め右方向」が「右方向」に一致しないよう、斜め系を先に判定する
         if instruction.contains("斜め右") || instruction.contains("やや右") {
             return 9 // SlightRight
         }
         if instruction.contains("斜め左") || instruction.contains("やや左") {
             return 16 // SlightLeft
+        }
+        // Apple Maps の日本語案内は「〜で右方向」形式
+        if instruction.contains("右方向") || instruction.contains("右に曲") || instruction.contains("右折") {
+            return 10 // Right
+        }
+        if instruction.contains("左方向") || instruction.contains("左に曲") || instruction.contains("左折") {
+            return 15 // Left
         }
         if instruction.contains("Uターン") || instruction.contains("折り返") {
             return 12 // UturnRight

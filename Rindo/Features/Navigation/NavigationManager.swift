@@ -136,7 +136,7 @@ final class NavigationManager {
         updateManeuverProgress(currentIndex: nearestIndex, currentCoord: current, route: route)
 
         // 残り距離・時間を概算更新
-        updateRemaining(currentIndex: nearestIndex, route: route)
+        updateRemaining(currentIndex: nearestIndex, currentCoord: current, route: route)
 
         return nil
     }
@@ -284,16 +284,23 @@ final class NavigationManager {
         isRerouting = false
     }
 
-    private func updateRemaining(currentIndex: Int, route: NavigationRoute) {
-        // 残りマニューバの距離・時間を合算
-        var dist = 0.0
-        var time = 0.0
-        for i in currentManeuverIndex..<route.maneuvers.count {
-            dist += route.maneuvers[i].distanceKm
-            time += route.maneuvers[i].timeSeconds
+    private func updateRemaining(currentIndex: Int, currentCoord: CLLocationCoordinate2D, route: NavigationRoute) {
+        // ルート形状に沿って現在地から終点までの距離を合算する
+        // （マニューバ距離の合算だと、次マニューバまでの区間が抜けて残り距離が短く出る）
+        let coords = route.coordinates
+        guard currentIndex < coords.count else { return }
+        func location(_ c: CLLocationCoordinate2D) -> CLLocation {
+            CLLocation(latitude: c.latitude, longitude: c.longitude)
         }
-        remainingDistanceKm = dist
-        remainingTimeSeconds = time
+        var distM = location(currentCoord).distance(from: location(coords[currentIndex]))
+        for i in currentIndex..<(coords.count - 1) {
+            distM += location(coords[i]).distance(from: location(coords[i + 1]))
+        }
+        remainingDistanceKm = distM / 1000
+        // 時間はルート全体の平均速度で按分
+        remainingTimeSeconds = route.totalDistanceKm > 0
+            ? route.totalTimeSeconds * remainingDistanceKm / route.totalDistanceKm
+            : 0
     }
 
     // MARK: - Live Activity
