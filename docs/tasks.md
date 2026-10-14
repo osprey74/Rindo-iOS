@@ -333,6 +333,16 @@
 
 ---
 
+## iOS 27 / iPadOS 27 対応確認（2026-10-14 検討）
+
+> iPadOS 27 で `UIRequiresFullScreen` によるサイズ変更の除外が効かなくなる件（[TN3192](https://developer.apple.com/documentation/technotes/tn3192-migrating-your-app-from-the-deprecated-uirequiresfullscreen-key)）を検討した。Rindo は同キー未使用・iPhone 専用（`TARGETED_DEVICE_FAMILY: "1"`）・`UILaunchScreen` 設定済み（[TN3208](https://developer.apple.com/documentation/technotes/tn3208-preparing-your-apps-launch-screen-to-meet-app-store-requirements) の提出要件を満たす）のため、必須の改修はなしと判断。以下は確認のみ。
+
+- [ ] iPadOS 27 の iPad シミュレータで起動し、ウィンドウをリサイズしても地図・下部パネルのレイアウトが崩れないことを確認
+- [ ] 縦向き固定（`UIInterfaceOrientationPortrait` のみ）の影響を確認（TN3192 はリサイズ対応の条件に「全向き対応」を挙げている。iPhone 専用アプリへの影響は未確認）
+- [ ] 将来 iPad に正式対応する場合は、横向き対応と最小サイズ指定（`windowResizability` / `UISceneSizeRestrictions`）を検討
+
+---
+
 ## 接続周りの先行整備（並行で進めて良い）
 
 - [x] rindo-api の `POST /api/rides` エンドポイント設計確定・実装済み（JSON track points、`migrations/004_rides.sql`）
